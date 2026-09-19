@@ -12,6 +12,26 @@ use rpassword::read_password;
 const WORKER_THREADS: usize = 4;
 const CHUNK_SIZE: usize = 8192; // 8KB streaming chunks
 
+#[allow(dead_code)]
+enum ArtifactType {
+    ElfBinary,
+    ExeBinary,
+    MsiInstaller,
+    ZipCompressed,
+    SevenZipPack,
+    GzipCompressed,
+    PdfDocument,
+    WordDocument,
+    ExcelSpreadsheet,
+    PngImage,
+    JpegImage,
+    GifImage,
+    ShellScript,
+    PythonScript,
+    UnknownBinary,
+    Plaintext,
+}
+
 struct ForensicJob {
     path: PathBuf,
     file_name: String,
