@@ -1,0 +1,6 @@
+/target/
+/isolated_vault/
+**/*.rs.bk
+*.dat
+*.log
+*.enc
