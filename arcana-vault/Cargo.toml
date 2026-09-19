@@ -3,3 +3,5 @@ aes-gcm = "0.10"
 argon2 = "0.5"
 generic-array = "0.14"
 rand = "0.8"
+arcana-vault = { path = "../arcana-vault" }  # or wherever it lives
+arcana-custody = { path = "../arcana-custody" }
