@@ -7,3 +7,4 @@ edition = "2024"
 sha2 = "0.11.0"
 arcana-vault = { path = "../arcana-vault" }
 arcana-custody = { path = "../arcana-custody" }
+rusqlite = { version = "0.32", features = ["bundled"] }
