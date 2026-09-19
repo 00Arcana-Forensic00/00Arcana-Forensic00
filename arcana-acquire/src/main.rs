@@ -13,10 +13,19 @@ const WORKER_THREADS: usize = 4; // Number of parallel processing channels
 #[derive(Debug, PartialEq, Clone)]
 enum ArtifactType {
     ElfBinary,
+    ExeBinary,
+    MsiInstaller,
     ZipCompressed,
+    SevenZipPack,
+    GzipCompressed,
     PdfDocument,
+    WordDocument,
+    ExcelSpreadsheet,
     PngImage,
     JpegImage,
+    GifImage,
+    ShellScript,
+    PythonScript,
     UnknownBinary,
     Plaintext,
 }
@@ -27,23 +36,54 @@ struct ForensicJob {
     extension: String,
     metadata: fs::Metadata,
 }
-
 fn determine_file_signature(buffer: &[u8]) -> ArtifactType {
     if buffer.len() < 4 {
         return ArtifactType::Plaintext;
     }
+
+    // Advanced Dictionary Match: Parse raw hex magic headers 
     match &buffer[..4] {
-        [0x7f, 0x45, 0x4c, 0x46] => ArtifactType::ElfBinary,
-        [0x50, 0x4b, 0x03, 0x04] => ArtifactType::ZipCompressed,
-        [0x25, 0x50, 0x44, 0x46] => ArtifactType::PdfDocument,
-        [0x89, 0x50, 0x4e, 0x47] => ArtifactType::PngImage,
-        [0xff, 0xd8, 0xff, _]    => ArtifactType::JpegImage,
-        _ => {
-            let non_printable = buffer.iter().filter(|&&b| b < 32 || b > 126).count();
-            if non_printable as f32 / buffer.len() as f32 > 0.2 {
-                ArtifactType::UnknownBinary
+        // --- Executables, Binaries & Installers ---
+        [0x7f, 0x45, 0x4c, 0x46] => ArtifactType::ElfBinary,     // .ELF (Linux Binary)
+        [0x4d, 0x5a, _, _]       => ArtifactType::ExeBinary,     // .EXE / .DLL (Windows PE)
+        [0xd0, 0xcf, 0x11, 0xe0] => ArtifactType::MsiInstaller,  // .MSI / .DOC (Legacy Compound File)
+        
+        // --- Archives & Compressed Packs ---
+        [0x50, 0x4b, 0x03, 0x04] => {
+            // Distinguish OpenXML formats (DOCX/XLSX) from standard ZIP containers
+            let content_str = String::from_utf8_lossy(buffer);
+            if content_str.contains("word/") {
+                ArtifactType::WordDocument
+            } else if content_str.contains("xl/") {
+                ArtifactType::ExcelSpreadsheet
             } else {
-                ArtifactType::Plaintext
+                ArtifactType::ZipCompressed
+            }
+        },
+        [0x37, 0x7a, 0xbc, 0xaf] => ArtifactType::SevenZipPack,   // .7Z
+        [0x1f, 0x8b, _, _]       => ArtifactType::GzipCompressed, // .GZ
+        
+        // --- Documents & Forensic Media ---
+        [0x25, 0x50, 0x44, 0x46] => ArtifactType::PdfDocument,   // .PDF
+        [0x89, 0x50, 0x4e, 0x47] => ArtifactType::PngImage,      // .PNG
+        [0xff, 0xd8, 0xff, _]    => ArtifactType::JpegImage,     // .JPG / .JPEG
+        [0x47, 0x49, 0x46, 0x38] => ArtifactType::GifImage,      // .GIF
+        
+        // --- Fallback Script or Raw Plaintext Strings ---
+        _ => {
+            // Catch hash files or script strings starting with common plaintext signatures
+            if buffer.starts_with(b"#!/") {
+                ArtifactType::ShellScript
+            } else if buffer.starts_with(b"import ") || buffer.starts_with(b"def ") {
+                ArtifactType::PythonScript
+            } else {
+                // High entropy indicates obscured binary payloads or missing keys
+                let non_printable = buffer.iter().filter(|&&b| b < 32 || b > 126).count();
+                if non_printable as f32 / buffer.len() as f32 > 0.2 {
+                    ArtifactType::UnknownBinary
+                } else {
+                    ArtifactType::Plaintext
+                }
             }
         }
     }
