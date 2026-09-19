@@ -8,8 +8,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use sha2::{Sha256, Digest};
 use rusqlite::{params, Connection};
 
-const DORMANT_THRESHOLD_SECS: u64 = 30 * 24 * 3600; 
-const WORKER_THREADS: usize = 4; 
+const WORKER_THREADS: usize = 4;
 
 #[derive(Debug, PartialEq, Clone)]
 enum ArtifactType {
@@ -30,22 +29,34 @@ enum ArtifactType {
     UnknownBinary,
     Plaintext,
 }
-fn is_safe_path(base: &Path, target: &Path) -> bool {
-    let canonical_base = match base.canonicalize() {
+
+struct ForensicJob {
+    path: PathBuf,
+    file_name: String,
+    metadata: fs::Metadata,
+}
+
+pub fn is_safe_path(target: &Path, root: &Path) -> bool {
+    let canonical_root = match root.canonicalize() {
         Ok(p) => p,
         Err(_) => return false,
     };
+
     let canonical_target = match target.canonicalize() {
         Ok(p) => p,
         Err(_) => return false,
     };
-    canonical_target.starts_with(&canonical_base)
-}
-struct ForensicJob {
-    path: PathBuf,
-    file_name: String,
-    extension: String,
-    metadata: fs::Metadata,
+
+    if !canonical_target.starts_with(&canonical_root) {
+        return false;
+    }
+
+    let path_str = canonical_target.to_string_lossy();
+    if path_str.starts_with("/proc") || path_str.starts_with("/sys") || path_str.starts_with("/dev") {
+        return false;
+    }
+
+    true
 }
 
 fn determine_file_signature(buffer: &[u8]) -> ArtifactType {
@@ -70,14 +81,11 @@ fn determine_file_signature(buffer: &[u8]) -> ArtifactType {
     }
 }
 
-// PREMIUM ENTERPRISE EXTENSION: Stable Native Database Sync
 fn execute_premium_db_sync_test(file_name: &str, hash: &str, size: i64, signature: &str) -> Result<(), rusqlite::Error> {
     println!("\n[💎 Premium DB] Connecting to synchronized corporate relational ledger...");
     
-    // Initialize an isolated, zero-footprint in-memory SQLite database instance
     let conn = Connection::open_in_memory()?;
 
-    // Build structural artifact tables matching premium requirements
     conn.execute(
         "CREATE TABLE IF NOT EXISTS forensic_artifacts (
             id INTEGER PRIMARY KEY,
@@ -89,7 +97,6 @@ fn execute_premium_db_sync_test(file_name: &str, hash: &str, size: i64, signatur
         [],
     )?;
 
-    // Commit parameters securely to prevent any query manipulation exploits
     conn.execute(
         "INSERT INTO forensic_artifacts (file_name, file_size, true_signature, sha256_hash) 
          VALUES (?1, ?2, ?3, ?4);",
@@ -100,11 +107,11 @@ fn execute_premium_db_sync_test(file_name: &str, hash: &str, size: i64, signatur
     Ok(())
 }
 
-fn process_forensic_job(job: ForensicJob, _current_time: u64, isolation_dir: &Path, key: &arcana_vault::EncryptionKey) -> io::Result<()> {
+fn process_forensic_job(
     job: ForensicJob, 
     _current_time: u64, 
-    isolation_dir: &Path,
-    key: &arcana_vault::EncryptionKey,  // Add key parameter
+    isolation_dir: &Path, 
+    key: &arcana_vault::EncryptionKey
 ) -> io::Result<()> {
     let mut file = File::open(&job.path)?;
     let mut chunk = vec![0u8; 1024];
@@ -121,11 +128,9 @@ fn process_forensic_job(job: ForensicJob, _current_time: u64, isolation_dir: &Pa
         let hash_result = hasher.finalize();
         let crypto_signature: String = hash_result.iter().map(|b| format!("{:02x}", b)).collect();
 
-        // Use the provided key instead of hardcoded one
-if let Ok(ciphertext) = arcana_vault::seal_data(&full_buffer, key) {
-    arcana_custody::log_chain_of_custody(&job.file_name, &crypto_signature, ciphertext.len());
+        if let Ok(ciphertext) = arcana_vault::seal_data(&full_buffer, key) {
+            arcana_custody::log_chain_of_custody(&job.file_name, &crypto_signature, ciphertext.len());
             
-            // Write encrypted file to vault
             let vault_path = isolation_dir.join(format!("{}.enc", job.file_name));
             let mut vault_file = File::create(&vault_path)?;
             vault_file.write_all(&ciphertext)?;
@@ -138,10 +143,6 @@ if let Ok(ciphertext) = arcana_vault::seal_data(&full_buffer, key) {
             ) {
                 println!("[X] Premium DB Write Flag Failure: {}", e);
             }
-        }
-    }
-    Ok(())
-}
         }
     }
     Ok(())
@@ -160,37 +161,37 @@ fn scan_directory_multithreaded(dir_path: &Path, key: arcana_vault::EncryptionKe
     let mut handles = vec![];
 
     for _ in 0..WORKER_THREADS {
-   let key_clone = key.clone(); // You'll need to derive Clone for EncryptionKey
-let key_clone = key.clone();
-let handle = thread::spawn(move || {
-    loop {
-        let job = {
-            let lock = rx_clone.lock().unwrap();
-            match lock.recv() {
-                Ok(job) => job,
-                Err(_) => break,
+        let key_clone = key.clone();
+        let rx_clone = Arc::clone(&rx);
+        let iso_dir_clone = Arc::clone(&isolation_dir_arc);
+
+        let handle = thread::spawn(move || {
+            loop {
+                let job = {
+                    let lock = rx_clone.lock().unwrap();
+                    match lock.recv() {
+                        Ok(job) => job,
+                        Err(_) => break,
+                    }
+                };
+                let _ = process_forensic_job(job, current_time, &iso_dir_clone, &key_clone);
             }
-        };
-        let _ = process_forensic_job(job, current_time, &iso_dir_clone, &key_clone);
-    }
-});
         });
         handles.push(handle);
     }
 
-   let base_dir = PathBuf::from(&args[1]).canonicalize()?;
+    let base_dir = dir_path.canonicalize()?;
 
-for entry in fs::read_dir(dir_path)? {
-    let entry = entry?;
-    let path = entry.path();
-    
-    // Path traversal protection
-    if !is_safe_path(&base_dir, &path) {
-        println!("[!] Blocked path traversal attempt: {:?}", path);
-        continue;
-    }
-    
-    if path.is_file() {
+    for entry in fs::read_dir(dir_path)? {
+        let entry = entry?;
+        let path = entry.path();
+        
+        if !is_safe_path(&path, &base_dir) {
+            println!("[!] Blocked path traversal attempt: {:?}", path);
+            continue;
+        }
+        
+        if path.is_file() {
             let extension = path.extension().unwrap_or_default().to_string_lossy().to_lowercase();
             let file_name = path.file_name().unwrap_or_default().to_string_lossy().into_owned();
 
@@ -199,58 +200,28 @@ for entry in fs::read_dir(dir_path)? {
             }
 
             let metadata = entry.metadata()?;
-            let job = ForensicJob { path, file_name, extension, metadata };
-            tx.send(job).unwrap_or_default();
+            let job = ForensicJob { path, file_name, metadata };
+            let _ = tx.send(job);
         }
     }
 
     drop(tx);
     for handle in handles {
-        handle.join().unwrap_or_default();
+        let _ = handle.join();
     }
     Ok(())
 }
-use std::path::{Path, PathBuf};
 
-/// Ensures the target path does not resolve outside the specified root
-/// and filters out dangerous system pseudo-filesystems or circular symlinks.
-pub fn is_safe_path(target: &Path, root: &Path) -> bool {
-    let canonical_root = match root.canonicalize() {
-        Ok(p) => p,
-        Err(_) => return false,
-    };
-
-    let canonical_target = match target.canonicalize() {
-        Ok(p) => p,
-        Err(_) => return false,
-    };
-
-    // Prevent directory traversal beyond the target evidence root
-    if !canonical_target.starts_with(&canonical_root) {
-        return false;
-    }
-
-    // Skip problematic special device mounts if targeting full filesystems
-    let path_str = canonical_target.to_string_lossy();
-    if path_str.starts_with("/proc") || path_str.starts_with("/sys") || path_str.starts_with("/dev") {
-        return false;
-    }
-
-    true
-}
-        
 fn main() -> io::Result<()> {
     println!("--- Arcana Forensics Workspace Execution Pipeline ---");
     
-    // Securely prompt for password
     print!("Enter vault password: ");
     stdout().flush()?;
     let mut password = String::new();
     stdin().read_line(&mut password)?;
     let password = password.trim();
     
-    // Generate key from password
-    let salt = [0u8; 16]; // In production, generate random salt and store it!
+    let salt = [0u8; 16];
     let key = arcana_vault::EncryptionKey::from_password(password, &salt);
     
     let args: Vec<String> = env::args().collect();
