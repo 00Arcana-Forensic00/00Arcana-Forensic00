@@ -78,8 +78,7 @@ fn determine_file_signature(buffer: &[u8]) -> ArtifactType {
 fn execute_premium_db_sync_test(file_name: &str, hash: &str, size: i64, signature: &str) -> Result<(), rusqlite::Error> {
     println!("\n[💎 Premium DB] Connecting to synchronized corporate relational ledger...");
     
-    let conn = Connection::open_in_memory()?;
-
+let conn = Connection::open("forensic_evidence.db3")?;  // Persistent SQLite
     conn.execute(
         "CREATE TABLE IF NOT EXISTS forensic_artifacts (
             id INTEGER PRIMARY KEY,
@@ -115,8 +114,16 @@ fn process_forensic_job(
     let true_profile = determine_file_signature(&chunk);
     let signature_string = format!("{:?}", true_profile);
 
-    let mut full_buffer = Vec::new();
-    if File::open(&job.path)?.read_to_end(&mut full_buffer).is_ok() {
+    // Stream hash instead of loading entire file
+let mut file = File::open(&job.path)?;
+let mut hasher = Sha256::new();
+let mut buffer = [0u8; 8192];  // 8KB chunks
+
+loop {
+    let n = file.read(&mut buffer)?;
+    if n == 0 { break; }
+    hasher.update(&buffer[..n]);
+}
         let mut hasher = Sha256::new();
         hasher.update(&full_buffer);
         let hash_result = hasher.finalize();
@@ -212,10 +219,11 @@ fn main() -> io::Result<()> {
     print!("Enter vault password: ");
     stdout().flush()?;
     let mut password = String::new();
-    stdin().read_line(&mut password)?;
-    let password = password.trim();
+let password = rpassword::prompt_password("Enter vault password: ")?;    let password = password.trim();
     
-    let salt = [0u8; 16];
+    use rand::Rng;
+let salt: [u8; 16] = rand::thread_rng().gen();
+// Store salt with ciphertext for decryption
     let key = arcana_vault::EncryptionKey::from_password(password, &salt);
     
     let args: Vec<String> = env::args().collect();
