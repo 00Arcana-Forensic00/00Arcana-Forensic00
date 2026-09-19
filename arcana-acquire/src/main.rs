@@ -19,8 +19,13 @@ let nonce: &Nonce = nonce_bytes
     .try_into()
     .expect("Nonce must be exactly 12 bytes for GCM");
 
+const WORKER_THREADS: usize = 4;
+const CHUNK_SIZE: usize = 8192;
+
 #[allow(dead_code)]
 enum ArtifactType {
+    ZipCompressed,
+    SevenZipPack,
     ElfBinary,
     ExeBinary,
     MsiInstaller,
