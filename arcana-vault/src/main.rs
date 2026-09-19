@@ -10,12 +10,12 @@ fn main() {
     // 1. Reinitialize the exact symmetric key bytes used during the lockdown
     let mut key_bytes = [0u8; 32];
     key_bytes.copy_from_slice(b"sixteen_byte_key_sixteen_byte_ky");
-    let key = Key::<Aes256Gcm>::from_slice(&key_bytes);
+    let key: &Key<Aes256Gcm> = key_bytes[..].into();
     let cipher = Aes256Gcm::new(key);
     
     let mut nonce_bytes = [0u8; 12];
     nonce_bytes.copy_from_slice(b"unique_nonce");
-    let nonce = Nonce::from_slice(&nonce_bytes);
+    let nonce: &Nonce = nonce_bytes[..].into();
 
     // 2. Identify the encrypted configuration block path
     let target_enc = Path::new("isolated_vault/Cargo.toml.enc");
