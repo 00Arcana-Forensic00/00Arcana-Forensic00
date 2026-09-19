@@ -1,10 +1,6 @@
-[package]
-name = "arcana-acquire"
-version = "0.1.0"
-edition = "2021"
-
 [dependencies]
+sha2 = "0.10"
+rusqlite = { version = "0.32", features = ["bundled"] }
+rpassword = "7.3"
 arcana-vault = { path = "../arcana-vault" }
 arcana-custody = { path = "../arcana-custody" }
-rusqlite = { version = "0.31", features = ["bundled"] }
-sha2 = "0.10"
