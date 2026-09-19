@@ -210,7 +210,35 @@ for entry in fs::read_dir(dir_path)? {
     }
     Ok(())
 }
+use std::path::{Path, PathBuf};
 
+/// Ensures the target path does not resolve outside the specified root
+/// and filters out dangerous system pseudo-filesystems or circular symlinks.
+pub fn is_safe_path(target: &Path, root: &Path) -> bool {
+    let canonical_root = match root.canonicalize() {
+        Ok(p) => p,
+        Err(_) => return false,
+    };
+
+    let canonical_target = match target.canonicalize() {
+        Ok(p) => p,
+        Err(_) => return false,
+    };
+
+    // Prevent directory traversal beyond the target evidence root
+    if !canonical_target.starts_with(&canonical_root) {
+        return false;
+    }
+
+    // Skip problematic special device mounts if targeting full filesystems
+    let path_str = canonical_target.to_string_lossy();
+    if path_str.starts_with("/proc") || path_str.starts_with("/sys") || path_str.starts_with("/dev") {
+        return false;
+    }
+
+    true
+}
+        
 fn main() -> io::Result<()> {
     println!("--- Arcana Forensics Workspace Execution Pipeline ---");
     
