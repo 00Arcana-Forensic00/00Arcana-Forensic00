@@ -1,6 +1,6 @@
 use std::env;
 use std::fs::{self, File};
-use std::io::{self, Read, Write};
+use std::io::{self, Read, Write, stdin, stdout};
 use std::path::{Path, PathBuf};
 use std::sync::{mpsc, Arc, Mutex};
 use std::thread;
