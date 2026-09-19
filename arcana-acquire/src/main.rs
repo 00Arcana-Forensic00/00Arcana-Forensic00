@@ -8,17 +8,18 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use sha2::{Sha256, Digest};
 use rusqlite::{params, Connection};
 use rpassword::read_password;
-
-const WORKER_THREADS: usize = 4;
-const CHUNK_SIZE: usize = 8192; // 8KB streaming chunks
+use aes_gcm::{
+    aead::{Aead, KeyInit},
+    Aes256Gcm, Key, Nonce,
+};
 let key: &Key<Aes256Gcm> = key_bytes
     .try_into()
     .expect("Key must be exactly 32 bytes for AES-256-GCM");
-
 let nonce: &Nonce = nonce_bytes
     .try_into()
     .expect("Nonce must be exactly 12 bytes for GCM");
-
+const WORKER_THREADS: usize = 4;
+const CHUNK_SIZE: usize = 8192; // 8KB streaming chunks
 const WORKER_THREADS: usize = 4;
 const CHUNK_SIZE: usize = 8192;
 
