@@ -30,7 +30,17 @@ enum ArtifactType {
     UnknownBinary,
     Plaintext,
 }
-
+fn is_safe_path(base: &Path, target: &Path) -> bool {
+    let canonical_base = match base.canonicalize() {
+        Ok(p) => p,
+        Err(_) => return false,
+    };
+    let canonical_target = match target.canonicalize() {
+        Ok(p) => p,
+        Err(_) => return false,
+    };
+    canonical_target.starts_with(&canonical_base)
+}
 struct ForensicJob {
     path: PathBuf,
     file_name: String,
@@ -90,7 +100,7 @@ fn execute_premium_db_sync_test(file_name: &str, hash: &str, size: i64, signatur
     Ok(())
 }
 
-fn process_forensic_job(
+fn process_forensic_job(job: ForensicJob, _current_time: u64, isolation_dir: &Path, key: &arcana_vault::EncryptionKey) -> io::Result<()> {
     job: ForensicJob, 
     _current_time: u64, 
     isolation_dir: &Path,
@@ -112,8 +122,8 @@ fn process_forensic_job(
         let crypto_signature: String = hash_result.iter().map(|b| format!("{:02x}", b)).collect();
 
         // Use the provided key instead of hardcoded one
-        if let Ok(ciphertext) = arcana_vault::seal_data(&full_buffer, key) {
-            arcana_custody::log_chain_of_custody(&job.file_name, &crypto_signature, ciphertext.len());
+if let Ok(ciphertext) = arcana_vault::seal_data(&full_buffer, key) {
+    arcana_custody::log_chain_of_custody(&job.file_name, &crypto_signature, ciphertext.len());
             
             // Write encrypted file to vault
             let vault_path = isolation_dir.join(format!("{}.enc", job.file_name));
@@ -137,7 +147,7 @@ fn process_forensic_job(
     Ok(())
 }
 
-fn scan_directory_multithreaded(dir_path: &Path) -> io::Result<()> {
+fn scan_directory_multithreaded(dir_path: &Path, key: arcana_vault::EncryptionKey) -> io::Result<()> {
     let current_time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_secs();
     let isolation_dir = PathBuf::from("isolated_vault");
     if !isolation_dir.exists() {
@@ -150,29 +160,37 @@ fn scan_directory_multithreaded(dir_path: &Path) -> io::Result<()> {
     let mut handles = vec![];
 
     for _ in 0..WORKER_THREADS {
-        let rx_clone = Arc::clone(&rx);
-        let iso_dir_clone = Arc::clone(&isolation_dir_arc);
-        
-        let handle = thread::spawn(move || {
-            loop {
-                let job = {
-                    let lock = rx_clone.lock().unwrap();
-                    match lock.recv() {
-                        Ok(job) => job,
-                        Err(_) => break, 
-                    }
-                };
-                let _ = process_forensic_job(job, current_time, &iso_dir_clone);
+   let key_clone = key.clone(); // You'll need to derive Clone for EncryptionKey
+let key_clone = key.clone();
+let handle = thread::spawn(move || {
+    loop {
+        let job = {
+            let lock = rx_clone.lock().unwrap();
+            match lock.recv() {
+                Ok(job) => job,
+                Err(_) => break,
             }
+        };
+        let _ = process_forensic_job(job, current_time, &iso_dir_clone, &key_clone);
+    }
+});
         });
         handles.push(handle);
     }
 
-    for entry in fs::read_dir(dir_path)? {
-        let entry = entry?;
-        let path = entry.path();
+   let base_dir = PathBuf::from(&args[1]).canonicalize()?;
 
-        if path.is_file() {
+for entry in fs::read_dir(dir_path)? {
+    let entry = entry?;
+    let path = entry.path();
+    
+    // Path traversal protection
+    if !is_safe_path(&base_dir, &path) {
+        println!("[!] Blocked path traversal attempt: {:?}", path);
+        continue;
+    }
+    
+    if path.is_file() {
             let extension = path.extension().unwrap_or_default().to_string_lossy().to_lowercase();
             let file_name = path.file_name().unwrap_or_default().to_string_lossy().into_owned();
 
@@ -195,12 +213,24 @@ fn scan_directory_multithreaded(dir_path: &Path) -> io::Result<()> {
 
 fn main() -> io::Result<()> {
     println!("--- Arcana Forensics Workspace Execution Pipeline ---");
+    
+    // Securely prompt for password
+    print!("Enter vault password: ");
+    stdout().flush()?;
+    let mut password = String::new();
+    stdin().read_line(&mut password)?;
+    let password = password.trim();
+    
+    // Generate key from password
+    let salt = [0u8; 16]; // In production, generate random salt and store it!
+    let key = arcana_vault::EncryptionKey::from_password(password, &salt);
+    
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
         println!("[!] Usage: cargo run -p arcana-acquire -- <target_directory_path>");
         return Ok(());
     }
-    scan_directory_multithreaded(Path::new(&args[1]))?;
-
+    
+    scan_directory_multithreaded(Path::new(&args[1]), key)?;
     Ok(())
 }
