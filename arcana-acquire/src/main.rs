@@ -46,40 +46,43 @@ fn determine_file_signature(buffer: &[u8]) -> ArtifactType {
         return ArtifactType::Plaintext;
     }
     
-    // Check for shebang scripts first (can be longer than 4 bytes)
-    if buffer.starts_with(b"#!/bin/") || buffer.starts_with(b"#!/usr/bin/") {
+    // Check text-based signatures first
+    if buffer.starts_with(b"#!/") {
+        if buffer.windows(7).any(|w| w == b"python" || w == b"python3") {
+            return ArtifactType::PythonScript;
+        }
         return ArtifactType::ShellScript;
-    }
-    if buffer.starts_with(b"#!/usr/bin/env python") || 
-       buffer.starts_with(b"#!/usr/bin/python") ||
-       buffer.starts_with(b"import ") {
-        return ArtifactType::PythonScript;
     }
     
     match &buffer[..4] {
         [0x7f, 0x45, 0x4c, 0x46] => ArtifactType::ElfBinary,
-        [0x4d, 0x5a, _, _]       => ArtifactType::ExeBinary,       // Windows executable
-        [0xd0, 0xcf, 0x11, 0xe0] => ArtifactType::MsiInstaller,    // MSI / OLE2
-        [0x50, 0x4b, 0x03, 0x04] => ArtifactType::ZipCompressed,   // ZIP (also DOCX/XLSX)
-        [0x37, 0x7a, 0xbc, 0xaf] => ArtifactType::SevenZipPack,    // 7z
-        [0x1f, 0x8b, ..]         => ArtifactType::GzipCompressed,  // GZ
-        [0x25, 0x50, 0x44, 0x46] => ArtifactType::PdfDocument,   // %PDF
-        [0x89, 0x50, 0x4e, 0x47] => ArtifactType::PngImage,       // PNG
-        [0xff, 0xd8, 0xff, _]    => ArtifactType::JpegImage,      // JPEG
-        [0x47, 0x49, 0x46, 0x38] => ArtifactType::GifImage,       // GIF8
+        [0x4d, 0x5a, _, _]       => ArtifactType::ExeBinary,
+        [0xd0, 0xcf, 0x11, 0xe0] => ArtifactType::MsiInstaller,
+        [0x50, 0x4b, 0x03, 0x04] => ArtifactType::ZipCompressed,
+        [0x37, 0x7a, 0xbc, 0xaf] => ArtifactType::SevenZipPack,
+        [0x1f, 0x8b, ..]         => ArtifactType::GzipCompressed,
+        [0x25, 0x50, 0x44, 0x46] => ArtifactType::PdfDocument,
+        [0x89, 0x50, 0x4e, 0x47] => ArtifactType::PngImage,
+        [0xff, 0xd8, 0xff, _]    => ArtifactType::JpegImage,
+        [0x47, 0x49, 0x46, 0x38] => ArtifactType::GifImage,
         _ => {
-            // Check for Office Open XML (ZIP-based)
-            if buffer.len() > 30 && &buffer[..4] == [0x50, 0x4b, 0x03, 0x04] {
-                // Peek inside ZIP for Office types
-                if contains_bytes(buffer, b"[Content_Types].xml") {
-                    if contains_bytes(buffer, b"word/") {
-                        return ArtifactType::WordDocument;
-                    }
-                    if contains_bytes(buffer, b"xl/") {
-                        return ArtifactType::ExcelSpreadsheet;
-                    }
-                }
+            // Office docs inside ZIP
+            if &buffer[..4] == [0x50, 0x4b, 0x03, 0x04] {
+                let buf_str = String::from_utf8_lossy(buffer);
+                if buf_str.contains("word/") { return ArtifactType::WordDocument; }
+                if buf_str.contains("xl/") { return ArtifactType::ExcelSpreadsheet; }
+                return ArtifactType::ZipCompressed;
             }
+            
+            let non_printable = buffer.iter().filter(|&&b| b < 32 || b > 126).count();
+            if non_printable as f32 / buffer.len() as f32 > 0.2 {
+                ArtifactType::UnknownBinary
+            } else {
+                ArtifactType::Plaintext
+            }
+        }
+    }
+}
             
             let non_printable = buffer.iter().filter(|&&b| b < 32 || b > 126).count();
             if non_printable as f32 / buffer.len() as f32 > 0.2 {
