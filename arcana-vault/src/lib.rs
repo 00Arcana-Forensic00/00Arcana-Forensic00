@@ -4,7 +4,7 @@ use aes_gcm::{
 };
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
-#[derive(Zeroize, ZeroizeOnDrop)]
+#[derive(Clone, Zeroize, ZeroizeOnDrop)]
 pub struct EncryptionKey([u8; 32]);
 
 impl EncryptionKey {
