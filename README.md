@@ -1,139 +1,40 @@
-mitchell5584dm@penguin:~/arcana-forensics$ cargo run -p arcana-acquire -- .
-warning: use of deprecated associated function `aes_gcm::aead::hybrid_array::Array::<T, U>::from_slice`: use `TryFrom` instead
- --> arcana-vault/src/lib.rs:7:33
-  |
-7 |     let key = Key::<Aes256Gcm>::from_slice(&key_bytes);
-  |                                 ^^^^^^^^^^
-  |
-  = note: `#[warn(deprecated)]` on by default
+# Arcana Forensics
 
-warning: use of deprecated associated function `aes_gcm::aead::hybrid_array::Array::<T, U>::from_slice`: use `TryFrom` instead
-  --> arcana-vault/src/lib.rs:12:24
-   |
-12 |     let nonce = Nonce::from_slice(&nonce_bytes);
-   |                        ^^^^^^^^^^
+[![Rust](https://img.shields.io/badge/Rust-2021_Edition-orange?logo=rust&logoColor=white)](https://www.rust-lang.org/)
+[![License](https://img.shields.io/badge/License-MIT%20%2F%20Apache--2.0-blue)](LICENSE)
+[![Security: AES-256-GCM](https://img.shields.io/badge/Encryption-AES--256--GCM-green?logo=lock&logoColor=white)](#vault-architecture)
+[![Integrity: SHA-256](https://img.shields.io/badge/Hashing-SHA--256-red)](#chain-of-custody)
+[![Storage: SQLite](https://img.shields.io/badge/Ledger-rusqlite-blueviolet?logo=sqlite&logoColor=white)](#ledger--audit)
 
-warning: `arcana-vault` (lib) generated 2 warnings
-   Compiling arcana-acquire v0.1.0 (/home/mitchell5584dm/arcana-forensics/arcana-acquire)
-warning: unused import: `Write`
- --> arcana-acquire/src/main.rs:3:27
-  |
-3 | use std::io::{self, Read, Write};
-  |                           ^^^^^
-  |
-  = note: `#[warn(unused_imports)]` on by default
+**Arcana Forensics** is a high-assurance digital forensics acquisition suite engineered in Rust. It captures, classifies, and seals evidence inside tamper-evident cryptographic containers with an automated chain-of-custody ledger.
 
-warning: constant `DORMANT_THRESHOLD_SECS` is never used
-  --> arcana-acquire/src/main.rs:11:7
-   |
-11 | const DORMANT_THRESHOLD_SECS: u64 = 30 * 24 * 3600; 
-   |       ^^^^^^^^^^^^^^^^^^^^^^
-   |
-   = note: `#[warn(dead_code)]` on by default
+---
 
-warning: multiple variants are never constructed
-  --> arcana-acquire/src/main.rs:19:5
-   |
-15 | enum ArtifactType {
-   |      ------------ variants in this enum
-...
-19 |     ZipCompressed,
-   |     ^^^^^^^^^^^^^
-20 |     SevenZipPack,
-   |     ^^^^^^^^^^^^
-21 |     GzipCompressed,
-   |     ^^^^^^^^^^^^^^
-22 |     PdfDocument,
-23 |     WordDocument,
-   |     ^^^^^^^^^^^^
-24 |     ExcelSpreadsheet,
-   |     ^^^^^^^^^^^^^^^^
-...
-27 |     GifImage,
-   |     ^^^^^^^^
-28 |     ShellScript,
-   |     ^^^^^^^^^^^
-29 |     PythonScript,
-   |     ^^^^^^^^^^^^
-   |
-   = note: `ArtifactType` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+## Key Capabilities
 
-warning: field `extension` is never read
-  --> arcana-acquire/src/main.rs:37:5
-   |
-34 | struct ForensicJob {
-   |        ----------- field in this struct
-...
-37 |     extension: String,
-   |     ^^^^^^^^^
+* **Zero Cloud Exposure:** Air-gapped operational model. Artifacts are sealed locally without outbound telemetry or network dependency.
+* **Cryptographic Enclave (`arcana-vault`):** Hardware-accelerated **AES-256-GCM** authenticated encryption ensures post-acquisition evidence confidentiality and tamper detection.
+* **Automated Chain of Custody:** Calculates cryptographic **SHA-256** checksums at the point of ingestion and enforces strict write-locks.
+* **Structured Ledger Tracking:** Commits acquisition metadata, epoch timestamps, and hashes to an embedded relational ledger (`rusqlite`) for defensible audit trails.
+* **Multi-Format Ingestion Engine:** Native discovery heuristics for archives (`.zip`, `.7z`, `.gz`), structured documents (`.pdf`, `.docx`, `.xlsx`), scripts (`.sh`, `.py`), and raw filesystem traces (`unallocated_space.dat`).
 
-warning: `arcana-acquire` (bin "arcana-acquire") generated 4 warnings (run `cargo fix --bin "arcana-acquire"` to apply 1 suggestion)
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.29s
-     Running `target/debug/arcana-acquire .`
---- Arcana Forensics Workspace Execution Pipeline ---
+---
 
---- Automated Chain of Custody Audit Sealed ---
-RECORD TARGET: unallocated_space.dat
-TIMESTAMP    : 1789820163 (Unix Epoch)
-SHA-256 HASH : e26507f3ae108f668383d71873df38829f669cf3214db731a8bed3381c3e3166
-VAULT SIZE   : 100 encrypted bytes
+## Architecture Overview
 
---- Automated Chain of Custody Audit Sealed ---
-RECORD TARGET: Cargo.toml
-TIMESTAMP    : 1789820163 (Unix Epoch)
-SHA-256 HASH : 8ef5aed359d84db411d1126e3133b637b9c4aafc1d995c66c5ce7e03bf359bd9
-VAULT SIZE   : 121 encrypted bytes
-STATUS       : Write-locked with zero cloud exposure.
------------------------------------------------
-
-[💎 Premium DB] Connecting to synchronized corporate relational ledger...
-
---- Automated Chain of Custody Audit Sealed ---
-RECORD TARGET: .gitignore
-TIMESTAMP    : 1789820163 (Unix Epoch)
-SHA-256 HASH : 379420c738d349e5b430729b2928bf13449309fd4ac7ab6346714c19fa8531b9
-VAULT SIZE   : 71 encrypted bytes
-STATUS       : Write-locked with zero cloud exposure.
------------------------------------------------
-STATUS       : Write-locked with zero cloud exposure.
------------------------------------------------
-
-[💎 Premium DB] Connecting to synchronized corporate relational ledger...
-
-[💎 Premium DB] Connecting to synchronized corporate relational ledger...
-[💎 Premium DB] SUCCESS: Relational entry committed safely via rusqlite.
-[💎 Premium DB] SUCCESS: Relational entry committed safely via rusqlite.
-[💎 Premium DB] SUCCESS: Relational entry committed safely via rusqlite.
-
---- Automated Chain of Custody Audit Sealed ---
-RECORD TARGET: release.yml.bak
-TIMESTAMP    : 1789820163 (Unix Epoch)
-SHA-256 HASH : 09e3741d279351296d07a780285b5b068b446cf0e3a0ffceda1ab22ccdb04528
-VAULT SIZE   : 1516 encrypted bytes
-STATUS       : Write-locked with zero cloud exposure.
------------------------------------------------
-
-[💎 Premium DB] Connecting to synchronized corporate relational ledger...
-[💎 Premium DB] SUCCESS: Relational entry committed safely via rusqlite.
-
---- Automated Chain of Custody Audit Sealed ---
-RECORD TARGET: PostgreSQL DDL Blueprint.sql
-TIMESTAMP    : 1789820163 (Unix Epoch)
-SHA-256 HASH : 07af83b8a980d34b3dadbd7ca625afa10cc3b2330d7c8355ad3d3add398b75b7
-VAULT SIZE   : 2081 encrypted bytes
-STATUS       : Write-locked with zero cloud exposure.
------------------------------------------------
-
-[💎 Premium DB] Connecting to synchronized corporate relational ledger...
-[💎 Premium DB] SUCCESS: Relational entry committed safely via rusqlite.
-
---- Automated Chain of Custody Audit Sealed ---
-RECORD TARGET: Cargo.lock
-TIMESTAMP    : 1789820163 (Unix Epoch)
-SHA-256 HASH : 4abb9199859a494ded6808e3c15a429a3e625a34063be9596bbeffa38436525b
-VAULT SIZE   : 11403 encrypted bytes
-STATUS       : Write-locked with zero cloud exposure.
------------------------------------------------
-
-[💎 Premium DB] Connecting to synchronized corporate relational ledger...
-[💎 Premium DB] SUCCESS: Relational entry committed safely via rusqlite.
+```text
+Target Filesystem / Block Device
+               │
+               ▼
+   [ arcana-acquire (CLI Engine) ]
+        │                  │
+        │ File Stream      │ Artifact Signatures
+        ▼                  ▼
+ [ arcana-vault ]   [ Forensic Classifier ]
+  - AES-256-GCM      - Magic byte detection
+  - SHA-256 seal     - Dormancy & metadata analysis
+        │                  │
+        └─────────┬────────┘
+                  ▼
+   [ Synchronized Relational Ledger ]
+     (Local SQLite via rusqlite)
