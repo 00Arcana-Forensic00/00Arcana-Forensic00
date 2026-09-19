@@ -7,22 +7,29 @@ use std::thread;
 use std::time::{SystemTime, UNIX_EPOCH};
 use sha2::{Sha256, Digest};
 use rusqlite::{params, Connection};
+use rpassword::read_password;
 
 const WORKER_THREADS: usize = 4;
+const CHUNK_SIZE: usize = 8192; // 8KB streaming chunks
 
-#[allow(dead_code)]
 #[derive(Debug, PartialEq, Clone)]
 enum ArtifactType {
+    ElfBinary,
     ExeBinary,
     MsiInstaller,
+    ZipCompressed,
     SevenZipPack,
     GzipCompressed,
     PdfDocument,
     WordDocument,
     ExcelSpreadsheet,
+    PngImage,
+    JpegImage,
     GifImage,
     ShellScript,
     PythonScript,
+    UnknownBinary,
+    Plaintext,
 }
 
 struct ForensicJob {
@@ -58,14 +65,42 @@ fn determine_file_signature(buffer: &[u8]) -> ArtifactType {
     if buffer.len() < 4 {
         return ArtifactType::Plaintext;
     }
+    
+    // Check for shebang scripts first (can be longer than 4 bytes)
+    if buffer.starts_with(b"#!/bin/") || buffer.starts_with(b"#!/usr/bin/") {
+        return ArtifactType::ShellScript;
+    }
+    if buffer.starts_with(b"#!/usr/bin/env python") || 
+       buffer.starts_with(b"#!/usr/bin/python") ||
+       buffer.starts_with(b"import ") {
+        return ArtifactType::PythonScript;
+    }
+    
     match &buffer[..4] {
         [0x7f, 0x45, 0x4c, 0x46] => ArtifactType::ElfBinary,
-        [0x4d, 0x5a, _, _]       => ArtifactType::ExeBinary,
-        [0xd0, 0xcf, 0x11, 0xe0] => ArtifactType::MsiInstaller,
-        [0x25, 0x50, 0x44, 0x46] => ArtifactType::PdfDocument,
-        [0x89, 0x50, 0x4e, 0x47] => ArtifactType::PngImage,
-        [0xff, 0xd8, 0xff, _]    => ArtifactType::JpegImage,
+        [0x4d, 0x5a, _, _]       => ArtifactType::ExeBinary,       // Windows executable
+        [0xd0, 0xcf, 0x11, 0xe0] => ArtifactType::MsiInstaller,    // MSI / OLE2
+        [0x50, 0x4b, 0x03, 0x04] => ArtifactType::ZipCompressed,   // ZIP (also DOCX/XLSX)
+        [0x37, 0x7a, 0xbc, 0xaf] => ArtifactType::SevenZipPack,    // 7z
+        [0x1f, 0x8b, ..]         => ArtifactType::GzipCompressed,  // GZ
+        [0x25, 0x50, 0x44, 0x46] => ArtifactType::PdfDocument,   // %PDF
+        [0x89, 0x50, 0x4e, 0x47] => ArtifactType::PngImage,       // PNG
+        [0xff, 0xd8, 0xff, _]    => ArtifactType::JpegImage,      // JPEG
+        [0x47, 0x49, 0x46, 0x38] => ArtifactType::GifImage,       // GIF8
         _ => {
+            // Check for Office Open XML (ZIP-based)
+            if buffer.len() > 30 && &buffer[..4] == [0x50, 0x4b, 0x03, 0x04] {
+                // Peek inside ZIP for Office types
+                if contains_bytes(buffer, b"[Content_Types].xml") {
+                    if contains_bytes(buffer, b"word/") {
+                        return ArtifactType::WordDocument;
+                    }
+                    if contains_bytes(buffer, b"xl/") {
+                        return ArtifactType::ExcelSpreadsheet;
+                    }
+                }
+            }
+            
             let non_printable = buffer.iter().filter(|&&b| b < 32 || b > 126).count();
             if non_printable as f32 / buffer.len() as f32 > 0.2 {
                 ArtifactType::UnknownBinary
@@ -76,86 +111,121 @@ fn determine_file_signature(buffer: &[u8]) -> ArtifactType {
     }
 }
 
-fn execute_premium_db_sync_test(file_name: &str, hash: &str, size: i64, signature: &str) -> Result<(), rusqlite::Error> {
-    println!("\n[💎 Premium DB] Connecting to synchronized corporate relational ledger...");
+fn contains_bytes(haystack: &[u8], needle: &[u8]) -> bool {
+    haystack.windows(needle.len()).any(|window| window == needle)
+}
+
+fn hash_file_streaming(path: &Path) -> io::Result<String> {
+    let mut file = File::open(path)?;
+    let mut hasher = Sha256::new();
+    let mut buffer = [0u8; CHUNK_SIZE];
     
-let conn = Connection::open("forensic_evidence.db3")?;  // Persistent SQLite
+    loop {
+        let n = file.read(&mut buffer)?;
+        if n == 0 { break; }
+        hasher.update(&buffer[..n]);
+    }
+    
+    Ok(hasher.finalize().iter().map(|b| format!("{:02x}", b)).collect())
+}
+
+fn execute_premium_db_sync(
+    conn: &Connection,
+    file_name: &str, 
+    hash: &str, 
+    size: i64, 
+    signature: &str
+) -> Result<(), rusqlite::Error> {
+    conn.execute(
+        "INSERT OR REPLACE INTO forensic_artifacts 
+         (file_name, file_size, true_signature, sha256_hash, processed_at) 
+         VALUES (?1, ?2, ?3, ?4, datetime('now'));",
+        params![file_name, size, signature, hash],
+    )?;
+    Ok(())
+}
+
+fn init_database(conn: &Connection) -> Result<(), rusqlite::Error> {
     conn.execute(
         "CREATE TABLE IF NOT EXISTS forensic_artifacts (
-            id INTEGER PRIMARY KEY,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             file_name TEXT NOT NULL,
             file_size INTEGER NOT NULL,
             true_signature TEXT NOT NULL,
-            sha256_hash TEXT NOT NULL UNIQUE
+            sha256_hash TEXT NOT NULL UNIQUE,
+            processed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );",
         [],
     )?;
-
+    
     conn.execute(
-        "INSERT INTO forensic_artifacts (file_name, file_size, true_signature, sha256_hash) 
-         VALUES (?1, ?2, ?3, ?4);",
-        params![file_name, size, signature, hash],
+        "CREATE INDEX IF NOT EXISTS idx_hash ON forensic_artifacts(sha256_hash);",
+        [],
     )?;
-
-    println!("[💎 Premium DB] SUCCESS: Relational entry committed safely via rusqlite.");
+    
     Ok(())
 }
 
 fn process_forensic_job(
     job: ForensicJob, 
-    _current_time: u64, 
     isolation_dir: &Path, 
-    key: &arcana_vault::EncryptionKey
+    key: &arcana_vault::EncryptionKey,
+    conn: &Arc<Mutex<Connection>>
 ) -> io::Result<()> {
+    // Get file signature from first 1KB
     let mut file = File::open(&job.path)?;
-    let mut chunk = vec![0u8; 1024];
-    let bytes_read = file.read(&mut chunk)?;
-    chunk.truncate(bytes_read);
-
-    let true_profile = determine_file_signature(&chunk);
+    let mut header = vec![0u8; 1024.min(job.metadata.len() as usize)];
+    file.read_exact(&mut header)?;
+    drop(file); // Close file explicitly
+    
+    let true_profile = determine_file_signature(&header);
     let signature_string = format!("{:?}", true_profile);
 
-    // Stream hash instead of loading entire file
-let mut file = File::open(&job.path)?;
-let mut hasher = Sha256::new();
-let mut buffer = [0u8; 8192];  // 8KB chunks
-
-loop {
-    let n = file.read(&mut buffer)?;
-    if n == 0 { break; }
-    hasher.update(&buffer[..n]);
-}
-        let mut hasher = Sha256::new();
-        hasher.update(&full_buffer);
-        let hash_result = hasher.finalize();
-        let crypto_signature: String = hash_result.iter().map(|b| format!("{:02x}", b)).collect();
-
-        if let Ok(ciphertext) = arcana_vault::seal_data(&full_buffer, key) {
-            arcana_custody::log_chain_of_custody(&job.file_name, &crypto_signature, ciphertext.len());
-            
-            let vault_path = isolation_dir.join(format!("{}.enc", job.file_name));
-            let mut vault_file = File::create(&vault_path)?;
-            vault_file.write_all(&ciphertext)?;
-
-            if let Err(e) = execute_premium_db_sync_test(
-                &job.file_name, 
-                &crypto_signature, 
-                job.metadata.len() as i64, 
-                &signature_string
-            ) {
-                println!("[X] Premium DB Write Flag Failure: {}", e);
-            }
+    // Hash file using streaming (supports files larger than RAM)
+    let crypto_signature = hash_file_streaming(&job.path)?;
+    
+    // Encrypt file
+    let mut file = File::open(&job.path)?;
+    let mut plaintext = Vec::new();
+    file.read_to_end(&mut plaintext)?;
+    
+    if let Ok(ciphertext) = arcana_vault::seal_data(&plaintext, key) {
+        // Log to chain of custody
+        arcana_custody::log_chain_of_custody(&job.file_name, &crypto_signature, ciphertext.len());
+        
+        // Write to vault
+        let vault_path = isolation_dir.join(format!("{}.enc", job.file_name));
+        let mut vault_file = File::create(&vault_path)?;
+        vault_file.write_all(&ciphertext)?;
+        
+        // Sync to database
+        let conn = conn.lock().unwrap();
+        if let Err(e) = execute_premium_db_sync(
+            &conn,
+            &job.file_name, 
+            &crypto_signature, 
+            job.metadata.len() as i64, 
+            &signature_string
+        ) {
+            eprintln!("[X] Database write failed: {}", e);
+        } else {
+            println!("[💎 Premium DB] Committed: {}", job.file_name);
         }
     }
+    
     Ok(())
 }
 
 fn scan_directory_multithreaded(dir_path: &Path, key: arcana_vault::EncryptionKey) -> io::Result<()> {
-    let current_time = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_secs();
     let isolation_dir = PathBuf::from("isolated_vault");
     if !isolation_dir.exists() {
         fs::create_dir(&isolation_dir)?;
     }
+
+    // Initialize persistent database
+    let conn = Connection::open("forensic_evidence.db3")?;
+    init_database(&conn)?;
+    let conn = Arc::new(Mutex::new(conn));
 
     let (tx, rx) = mpsc::channel::<ForensicJob>();
     let rx = Arc::new(Mutex::new(rx));
@@ -166,6 +236,7 @@ fn scan_directory_multithreaded(dir_path: &Path, key: arcana_vault::EncryptionKe
         let key_clone = key.clone();
         let rx_clone = Arc::clone(&rx);
         let iso_dir_clone = Arc::clone(&isolation_dir_arc);
+        let conn_clone = Arc::clone(&conn);
 
         let handle = thread::spawn(move || {
             loop {
@@ -176,7 +247,9 @@ fn scan_directory_multithreaded(dir_path: &Path, key: arcana_vault::EncryptionKe
                         Err(_) => break,
                     }
                 };
-                let _ = process_forensic_job(job, current_time, &iso_dir_clone, &key_clone);
+                if let Err(e) = process_forensic_job(job, &iso_dir_clone, &key_clone, &conn_clone) {
+                    eprintln!("[X] Processing error: {}", e);
+                }
             }
         });
         handles.push(handle);
@@ -189,19 +262,19 @@ fn scan_directory_multithreaded(dir_path: &Path, key: arcana_vault::EncryptionKe
         let path = entry.path();
         
         if !is_safe_path(&path, &base_dir) {
-            println!("[!] Blocked path traversal attempt: {:?}", path);
+            println!("[!] Blocked path traversal: {:?}", path);
             continue;
         }
         
         if path.is_file() {
-            let extension = path.extension().unwrap_or_default().to_string_lossy().to_lowercase();
-            let file_name = path.file_name().unwrap_or_default().to_string_lossy().into_owned();
-
-            if extension == "json" || extension == "txt" || path.to_string_lossy().contains("target/") || path.to_string_lossy().contains("isolated_vault/") {
+            let path_str = path.to_string_lossy();
+            if path_str.contains("/target/") || path_str.contains("/isolated_vault/") {
                 continue;
             }
 
+            let file_name = path.file_name().unwrap_or_default().to_string_lossy().into_owned();
             let metadata = entry.metadata()?;
+            
             let job = ForensicJob { path, file_name, metadata };
             let _ = tx.send(job);
         }
@@ -211,6 +284,8 @@ fn scan_directory_multithreaded(dir_path: &Path, key: arcana_vault::EncryptionKe
     for handle in handles {
         let _ = handle.join();
     }
+    
+    println!("[+] Forensic acquisition complete. Database: forensic_evidence.db3");
     Ok(())
 }
 
@@ -219,13 +294,11 @@ fn main() -> io::Result<()> {
     
     print!("Enter vault password: ");
     stdout().flush()?;
-    let mut password = String::new();
-let password = rpassword::prompt_password("Enter vault password: ")?;    let password = password.trim();
+    let password = read_password().unwrap_or_default();
     
-    use rand::Rng;
-let salt: [u8; 16] = rand::thread_rng().gen();
-// Store salt with ciphertext for decryption
-    let key = arcana_vault::EncryptionKey::from_password(password, &salt);
+    // Generate random salt
+    let salt = arcana_vault::EncryptionKey::generate_salt();
+    let key = arcana_vault::EncryptionKey::from_password(&password, &salt);
     
     let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
