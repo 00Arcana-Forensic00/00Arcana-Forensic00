@@ -1,10 +1,11 @@
 [package]
 name = "arcana-acquire"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 
 [dependencies]
-sha2 = "0.11.0"
 arcana-vault = { path = "../arcana-vault" }
-arcana-custody = { path = "../arcana-custody" }
-rusqlite = { version = "0.32", features = ["bundled"] }
+rusqlite = { version = "0.31", features = ["bundled"] }
+sha2 = "0.10"
+rpassword = "7.3"
+rayon = "1.10" # or your threading mechanism of choice
