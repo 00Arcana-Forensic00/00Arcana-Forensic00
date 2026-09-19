@@ -10,6 +10,7 @@ use rusqlite::{params, Connection};
 
 const WORKER_THREADS: usize = 4;
 
+#[allow(dead_code)]
 #[derive(Debug, PartialEq, Clone)]
 enum ArtifactType {
     ElfBinary,
