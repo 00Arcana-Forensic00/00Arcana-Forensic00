@@ -12,23 +12,16 @@ const WORKER_THREADS: usize = 4;
 
 #[allow(dead_code)]
 #[derive(Debug, PartialEq, Clone)]
-enum ArtifactType {
-    ElfBinary,
     ExeBinary,
     MsiInstaller,
-    ZipCompressed,
     SevenZipPack,
     GzipCompressed,
     PdfDocument,
     WordDocument,
     ExcelSpreadsheet,
-    PngImage,
-    JpegImage,
     GifImage,
     ShellScript,
     PythonScript,
-    UnknownBinary,
-    Plaintext,
 }
 
 struct ForensicJob {
