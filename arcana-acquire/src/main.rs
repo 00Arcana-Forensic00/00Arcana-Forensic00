@@ -23,7 +23,7 @@ const CHUNK_SIZE: usize = 8192; // 8KB streaming chunks
 const WORKER_THREADS: usize = 4;
 const CHUNK_SIZE: usize = 8192;
 
-#[allow(dead_code)]
+#[warn(dead_code)]
 enum ArtifactType {
     ZipCompressed,
     SevenZipPack,
