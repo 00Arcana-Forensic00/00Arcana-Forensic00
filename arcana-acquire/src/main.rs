@@ -90,8 +90,12 @@ fn execute_premium_db_sync_test(file_name: &str, hash: &str, size: i64, signatur
     Ok(())
 }
 
-fn process_forensic_job(job: ForensicJob, _current_time: u64, _isolation_dir: &Path) -> io::Result<()> {
-
+fn process_forensic_job(
+    job: ForensicJob, 
+    _current_time: u64, 
+    isolation_dir: &Path,
+    key: &arcana_vault::EncryptionKey,  // Add key parameter
+) -> io::Result<()> {
     let mut file = File::open(&job.path)?;
     let mut chunk = vec![0u8; 1024];
     let bytes_read = file.read(&mut chunk)?;
@@ -107,13 +111,27 @@ fn process_forensic_job(job: ForensicJob, _current_time: u64, _isolation_dir: &P
         let hash_result = hasher.finalize();
         let crypto_signature: String = hash_result.iter().map(|b| format!("{:02x}", b)).collect();
 
-        if let Ok(ciphertext) = arcana_vault::seal_data(&full_buffer) {
+        // Use the provided key instead of hardcoded one
+        if let Ok(ciphertext) = arcana_vault::seal_data(&full_buffer, key) {
             arcana_custody::log_chain_of_custody(&job.file_name, &crypto_signature, ciphertext.len());
             
-            // Execute the native database insertion transaction logic
-            if let Err(e) = execute_premium_db_sync_test(&job.file_name, &crypto_signature, job.metadata.len() as i64, &signature_string) {
+            // Write encrypted file to vault
+            let vault_path = isolation_dir.join(format!("{}.enc", job.file_name));
+            let mut vault_file = File::create(&vault_path)?;
+            vault_file.write_all(&ciphertext)?;
+
+            if let Err(e) = execute_premium_db_sync_test(
+                &job.file_name, 
+                &crypto_signature, 
+                job.metadata.len() as i64, 
+                &signature_string
+            ) {
                 println!("[X] Premium DB Write Flag Failure: {}", e);
             }
+        }
+    }
+    Ok(())
+}
         }
     }
     Ok(())
