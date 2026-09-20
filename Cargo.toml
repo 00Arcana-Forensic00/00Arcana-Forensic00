@@ -1,9 +1,9 @@
 [workspace]
 members = [
-    "arcana-core",
-    "arcana-vault", 
-    "arcana-acquire",
-    "arcana-custody",
+    "crates/arcana-core",
+    "crates/arcana-vault",
+    "crates/arcana-acquire",
+    "crates/arcana-custody",
 ]
 resolver = "2"
 
@@ -13,7 +13,7 @@ edition = "2021"
 license = "MIT"
 
 [workspace.dependencies]
-arcana-core = { path = "arcana-core" }
+arcana-core = { path = "crates/arcana-core" }
 aes-gcm = "0.10"
 sha2 = "0.10"
 thiserror = "1.0"
