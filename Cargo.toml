@@ -1,57 +1,22 @@
-# Cargo.toml (workspace root)
 [workspace]
-resolver = "3"
 members = [
-    "crates/arcana-core",
-    "crates/arcana-vault",
-    "crates/arcana-custody", 
-    "crates/arcana-acquire",
-    # "crates/arcana-plugins",  # Uncomment when ready, or keep private
+    "arcana-core",
+    "arcana-vault", 
+    "arcana-acquire",
+    "arcana-custody",
 ]
-
-default-members = ["crates/arcana-acquire"]
+resolver = "2"
 
 [workspace.package]
 version = "0.1.0"
-authors = ["Your Name <email>"]
 edition = "2021"
-license = "MIT OR Apache-2.0"
-repository = "https://github.com/yourname/arcana-forensics"
+license = "MIT"
 
 [workspace.dependencies]
-# Centralize versions for consistency
-arcana-core = { path = "crates/arcana-core" }
-arcana-vault = { path = "crates/arcana-vault" }
-arcana-custody = { path = "crates/arcana-custody" }
-
-# Crypto
+arcana-core = { path = "arcana-core" }
 aes-gcm = "0.10"
 sha2 = "0.10"
-blake3 = "1.5"
-
-# Storage
-rusqlite = { version = "0.32", features = ["bundled"] }
-serde = { version = "1.0", features = ["derive"] }
-
-# Async (for future scalability)
-tokio = { version = "1.40", features = ["rt-multi-thread"] }
-
-# Error handling
 thiserror = "1.0"
-anyhow = "1.0"
-
-[profile.release]
-opt-level = 3
-lto = "fat"           # Full link-time optimization
-codegen-units = 1
-strip = "symbols"     # Or "debuginfo" if you need panic messages
-panic = "abort"
-
-# Smaller binary size for deployment
-[profile.release-minimal]
-inherits = "release"
-opt-level = "z"       # Optimize for size
-lto = true
-codegen-units = 1
-strip = true
-panic = "abort"
+argon2 = "0.5"
+rand_core = "0.6"
+rand = "0.8"
