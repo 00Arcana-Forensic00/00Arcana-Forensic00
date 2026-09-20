@@ -15,3 +15,6 @@ This repository now includes a static Cloudflare Pages site in `site/`.
 ```bash
 npx wrangler pages dev site
 # or serve the static directory with any local HTTP server
+```
+
+The `_headers` file applies browser security headers on Cloudflare Pages. `wrangler.toml` intentionally contains no account ID or credentials; authenticate Wrangler through `wrangler login` or a secret-managed `CLOUDFLARE_API_TOKEN`.
