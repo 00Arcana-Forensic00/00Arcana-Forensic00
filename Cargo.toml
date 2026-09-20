@@ -1,9 +1,11 @@
 [workspace]
 members = [
     "crates/arcana-core",
-    "crates/arcana-vault",
-    "crates/arcana-acquire",
+    "crates/arcana-vault", 
     "crates/arcana-custody",
+    "crates/arcana-acquire",
+    "crates/arcana-sanitize",      # NEW: Core sanitization
+    "crates/arcana-scif",          # NEW: NASA-grade physical (Enterprise)
 ]
 resolver = "2"
 
