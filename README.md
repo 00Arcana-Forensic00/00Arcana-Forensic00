@@ -38,3 +38,50 @@ Target Filesystem / Block Device
                   ▼
    [ Synchronized Relational Ledger ]
      (Local SQLite via rusqlite)
+
+arcana-forensics/
+├── Cargo.toml                    # Workspace root
+├── crates/
+│   ├── arcana-core/              # NEW: Shared types, traits, errors
+│   │   └── src/
+│   │       ├── lib.rs
+│   │       ├── types.rs          # Evidence, Hash, Timestamp
+│   │       ├── traits.rs         # Sealer, Classifier, Ledger
+│   │       └── errors.rs         # Unified error types
+│   │
+│   ├── arcana-vault/             # Cryptographic sealing (OPEN SOURCE)
+│   │   └── src/
+│   │       ├── lib.rs
+│   │       ├── seal.rs           # AES-256-GCM sealing
+│   │       ├── verify.rs         # Integrity verification
+│   │       └── keymgmt.rs        # Basic key handling
+│   │
+│   ├── arcana-custody/           # Audit ledger (OPEN SOURCE)
+│   │   └── src/
+│   │       ├── lib.rs
+│   │       ├── ledger.rs         # SQLite schema & writes
+│   │       ├── chain.rs          # Hash chain verification
+│   │       └── report.rs         # Audit report generation
+│   │
+│   ├── arcana-acquire/           # CLI acquisition tool (OPEN SOURCE)
+│   │   └── src/
+│   │       ├── main.rs
+│   │       ├── commands/
+│   │       │   ├── acquire.rs    # Disk/file acquisition
+│   │       │   ├── verify.rs    # Verify sealed evidence
+│   │       │   └── export.rs    # Export to open formats
+│   │       └── classifiers/      # Basic file type detection
+│   │           ├── magic.rs
+│   │           └── mime.rs
+│   │
+│   └── arcana-plugins/           # PREMIUM — separate crate or workspace
+│       ├── Cargo.toml            # Private crate, not in main workspace
+│       ├── yara-engine/
+│       ├── memory-forensics/
+│       ├── registry-parser/
+│       └── cloud-connectors/
+│
+├── plugins/                      # Alternative: premium as path dependencies
+│   └── yara/                     # Only built with --features premium
+│
+└── Cargo.lock                    # Single lockfile for reproducibility
