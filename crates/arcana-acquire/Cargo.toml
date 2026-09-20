@@ -1,0 +1,6 @@
+[dependencies]
+sha2 = "0.10"
+rusqlite = { version = "0.32", features = ["bundled"] }
+rpassword = "7.3"
+arcana-vault = { path = "../arcana-vault" }
+arcana-custody = { path = "../arcana-custody" }
