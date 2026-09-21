@@ -40,7 +40,6 @@ pub enum ArcanaError {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct EvidenceRecord {
-    pub source_path: String,
     pub relative_path: String,
     pub size_bytes: u64,
     pub sha256: String,
@@ -56,7 +55,6 @@ pub struct CaseManifest {
     pub case_id: String,
     pub operator: String,
     pub created_unix: u64,
-    pub source_root: String,
     pub evidence: Vec<EvidenceRecord>,
 }
 
@@ -87,6 +85,7 @@ pub fn sha256_file(path: &Path) -> Result<String, ArcanaError> {
     Ok(hex::encode(hasher.finalize()))
 }
 
+/// Canonicalize `candidate` and require it to stay under `root` via strip_prefix.
 pub fn confined_path(root: &Path, candidate: &Path) -> Result<PathBuf, ArcanaError> {
     let root = if root.exists() {
         root.canonicalize()?
@@ -107,7 +106,7 @@ pub fn confined_path(root: &Path, candidate: &Path) -> Result<PathBuf, ArcanaErr
             .ok_or_else(|| ArcanaError::PathNotAllowed(candidate.display().to_string()))?;
         parent.canonicalize()?.join(name)
     };
-    if !candidate.starts_with(&root) {
+    if candidate.strip_prefix(&root).is_err() {
         return Err(ArcanaError::PathNotAllowed(format!(
             "{} is outside {}",
             candidate.display(),
