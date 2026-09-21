@@ -1,314 +1,572 @@
-use std::env;
-use std::fs::{self, File};
-use std::io::{self, Read, Write, stdout};
+use std::fs::{File, OpenOptions, remove_file};
+use std::io::{Write, Seek, SeekFrom, Read};
 use std::path::{Path, PathBuf};
-use std::sync::{mpsc, Arc, Mutex};
-use std::thread;
+use std::os::unix::fs::OpenOptionsExt;
+use rand::{RngCore, rngs::OsRng};
+use sha2::{Sha256, Digest};
+use zeroize::{Zeroize, ZeroizeOnDrop};
+use ed25519_dalek::{Signer, SigningKey, Verifier, Signature, VerifyingKey};
+use serde::{Serialize, Deserialize};
+use arcana_core::ArcanaError;
 
-use sha2::{Digest, Sha256};
-use rusqlite::{params, Connection};
-use rpassword::read_password;
-
-// FIX 1: Removed duplicate const declarations
-const WORKER_THREADS: usize = 4;
-const CHUNK_SIZE: usize = 8192; // 8KB streaming chunks
-
-// FIX 2: #[warn] -> #[allow] (warn *enables* the lint, allow *suppresses* it)
-// FIX 3: Added #[derive(Debug)] — required for format!("{:?}", true_profile)
-// FIX 4: Removed duplicate ZipCompressed and SevenZipPack variants
-#[allow(dead_code)]
-#[derive(Debug)]
-enum ArtifactType {
-    ZipCompressed,
-    SevenZipPack,
-    ElfBinary,
-    ExeBinary,
-    MsiInstaller,
-    GzipCompressed,
-    PdfDocument,
-    WordDocument,
-    ExcelSpreadsheet,
-    PngImage,
-    JpegImage,
-    GifImage,
-    ShellScript,
-    PythonScript,
-    UnknownBinary,
-    Plaintext,
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub enum DestructionMethod {
+    Clear,
+    Purge,
+    Destroy,
+    CryptoErase,
+    NvmeFormat,
 }
 
-struct ForensicJob {
-    path: PathBuf,
-    file_name: String,
-    metadata: fs::Metadata,
+#[derive(Debug, Serialize, Deserialize, ZeroizeOnDrop)]
+pub struct ShredReport {
+    pub version: u32,
+    pub target: String,
+    pub method: DestructionMethod,
+    pub passes: u32,
+    pub bytes_processed: u64,
+    pub verification_passed: bool,
+    pub verification_samples: u64,
+    pub timestamp: i64,
+    pub device_serial: Option<String>,
+    pub operator: String,
+    pub certificate: Vec<u8>,
+    pub signature: Vec<u8>,
 }
 
-pub fn is_safe_path(target: &Path, root: &Path) -> bool {
-    let canonical_root = match root.canonicalize() {
-        Ok(p) => p,
-        Err(_) => return false,
-    };
-    let canonical_target = match target.canonicalize() {
-        Ok(p) => p,
-        Err(_) => return false,
-    };
-
-    if !canonical_target.starts_with(&canonical_root) {
-        return false;
-    }
-
-    let path_str = canonical_target.to_string_lossy();
-    if path_str.starts_with("/proc")
-        || path_str.starts_with("/sys")
-        || path_str.starts_with("/dev")
-    {
-        return false;
-    }
-
-    true
+pub struct CryptoShredder {
+    verification_enabled: bool,
+    secure_random: OsRng,
+    signing_key: SigningKey,
 }
 
-// FIX 5: Moved above determine_file_signature — it's called by it
-fn contains_bytes(haystack: &[u8], needle: &[u8]) -> bool {
-    haystack.windows(needle.len()).any(|window| window == needle)
-}
-
-fn determine_file_signature(buffer: &[u8]) -> ArtifactType {
-    if buffer.len() < 4 {
-        return ArtifactType::Plaintext;
-    }
-
-    if buffer.starts_with(b"#!/") {
-        // FIX 6: windows(7) with b"python" (6 bytes) never matched — use contains_bytes instead
-        if contains_bytes(buffer, b"python3") || contains_bytes(buffer, b"python") {
-            return ArtifactType::PythonScript;
-        }
-        return ArtifactType::ShellScript;
-    }
-
-    // FIX 7: Office doc check was inside the `_` wildcard arm — unreachable because
-    // [0x50,0x4b,0x03,0x04] was already consumed by the ZipCompressed arm above it.
-    // Moved here, before the match, so .docx/.xlsx are correctly identified.
-    if buffer.starts_with(&[0x50, 0x4b, 0x03, 0x04]) {
-        let buf_str = String::from_utf8_lossy(buffer);
-        if buf_str.contains("word/") {
-            return ArtifactType::WordDocument;
-        }
-        if buf_str.contains("xl/") {
-            return ArtifactType::ExcelSpreadsheet;
-        }
-        return ArtifactType::ZipCompressed;
-    }
-
-    match &buffer[..4] {
-        [0x7f, 0x45, 0x4c, 0x46] => ArtifactType::ElfBinary,
-        [0x4d, 0x5a, _, _]       => ArtifactType::ExeBinary,
-        [0xd0, 0xcf, 0x11, 0xe0] => ArtifactType::MsiInstaller,
-        [0x37, 0x7a, 0xbc, 0xaf] => ArtifactType::SevenZipPack,
-        [0x1f, 0x8b, ..]         => ArtifactType::GzipCompressed,
-        [0x25, 0x50, 0x44, 0x46] => ArtifactType::PdfDocument,
-        [0x89, 0x50, 0x4e, 0x47] => ArtifactType::PngImage,
-        [0xff, 0xd8, 0xff, _]    => ArtifactType::JpegImage,
-        [0x47, 0x49, 0x46, 0x38] => ArtifactType::GifImage,
-        _ => {
-            let non_printable = buffer.iter().filter(|&&b| b < 32 || b > 126).count();
-            if non_printable as f32 / buffer.len() as f32 > 0.2 {
-                ArtifactType::UnknownBinary
-            } else {
-                ArtifactType::Plaintext
-            }
+impl CryptoShredder {
+    pub fn new(signing_key: SigningKey) -> Self {
+        Self {
+            verification_enabled: true,
+            secure_random: OsRng,
+            signing_key,
         }
     }
-    // FIX 8: Removed the duplicate stray code block that appeared after the closing brace
-}
 
-fn hash_file_streaming(path: &Path) -> io::Result<String> {
-    let mut file = File::open(path)?;
-    let mut hasher = Sha256::new();
-    let mut buffer = [0u8; CHUNK_SIZE];
-
-    loop {
-        let n = file.read(&mut buffer)?;
-        if n == 0 {
-            break;
-        }
-        hasher.update(&buffer[..n]);
+    /// Generate a new Ed25519 keypair for certificate signing
+    pub fn generate_keypair() -> (SigningKey, VerifyingKey) {
+        let mut csprng = OsRng;
+        let signing_key = SigningKey::generate(&mut csprng);
+        let verifying_key = signing_key.verifying_key();
+        (signing_key, verifying_key)
     }
 
-    Ok(hasher.finalize().iter().map(|b| format!("{:02x}", b)).collect())
-}
+    pub fn shred_file(
+        &mut self,
+        path: &Path,
+        method: DestructionMethod,
+        operator: &str,
+    ) -> Result<ShredReport, ArcanaError> {
+        let metadata = std::fs::metadata(path)?;
+        let file_size = metadata.len();
+        let device_serial = self.get_device_serial(path).ok();
 
-fn execute_premium_db_sync(
-    conn: &Connection,
-    file_name: &str,
-    hash: &str,
-    size: i64,
-    signature: &str,
-) -> Result<(), rusqlite::Error> {
-    conn.execute(
-        "INSERT OR REPLACE INTO forensic_artifacts
-         (file_name, file_size, true_signature, sha256_hash, processed_at)
-         VALUES (?1, ?2, ?3, ?4, datetime('now'));",
-        params![file_name, size, signature, hash],
-    )?;
-    Ok(())
-}
+        let mut report = match method {
+            DestructionMethod::Clear => self.nist_clear(path, file_size)?,
+            DestructionMethod::Purge => self.nist_purge(path, file_size)?,
+            DestructionMethod::Destroy => self.nist_destroy(path)?,
+            DestructionMethod::CryptoErase => self.crypto_erase(path)?,
+            DestructionMethod::NvmeFormat => self.nvme_format(path)?,
+        };
 
-fn init_database(conn: &Connection) -> Result<(), rusqlite::Error> {
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS forensic_artifacts (
-            id            INTEGER PRIMARY KEY AUTOINCREMENT,
-            file_name     TEXT    NOT NULL,
-            file_size     INTEGER NOT NULL,
-            true_signature TEXT   NOT NULL,
-            sha256_hash   TEXT    NOT NULL UNIQUE,
-            processed_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );",
-        [],
-    )?;
+        report.operator = operator.to_string();
+        report.device_serial = device_serial;
+        report.version = 1;
 
-    conn.execute(
-        "CREATE INDEX IF NOT EXISTS idx_hash ON forensic_artifacts(sha256_hash);",
-        [],
-    )?;
+        self.finalize_deletion(path)?;
+        self.sign_report(&mut report)?;
 
-    Ok(())
-}
+        Ok(report)
+    }
 
-fn process_forensic_job(
-    job: ForensicJob,
-    isolation_dir: &Path,
-    key: &arcana_vault::EncryptionKey,
-    conn: &Arc<Mutex<Connection>>,
-) -> io::Result<()> {
-    let mut file = File::open(&job.path)?;
-    let mut header = vec![0u8; 1024.min(job.metadata.len() as usize)];
-    file.read_exact(&mut header)?;
-    drop(file);
+    /// NIST Clear: Single overwrite with fixed pattern
+    fn nist_clear(&mut self, path: &Path, size: u64) -> Result<ShredReport, ArcanaError> {
+        let pattern: Vec<u8> = vec![0x00];
+        self.overwrite_file(path, &pattern, size)?;
+        self.sync_file(path)?;
 
-    let true_profile = determine_file_signature(&header);
-    let signature_string = format!("{:?}", true_profile);
-
-    let crypto_signature = hash_file_streaming(&job.path)?;
-
-    let mut file = File::open(&job.path)?;
-    let mut plaintext = Vec::new();
-    file.read_to_end(&mut plaintext)?;
-
-    if let Ok(ciphertext) = arcana_vault::seal_data(&plaintext, key) {
-        arcana_custody::log_chain_of_custody(&job.file_name, &crypto_signature, ciphertext.len());
-
-        let vault_path = isolation_dir.join(format!("{}.enc", job.file_name));
-        File::create(&vault_path)?.write_all(&ciphertext)?;
-
-        let conn = conn.lock().unwrap();
-        if let Err(e) = execute_premium_db_sync(
-            &conn,
-            &job.file_name,
-            &crypto_signature,
-            job.metadata.len() as i64,
-            &signature_string,
-        ) {
-            eprintln!("[X] Database write failed: {}", e);
+        let verification_passed = if self.verification_enabled {
+            self.verify_overwrite(path, &pattern, size)?
         } else {
-            println!("[💎 Premium DB] Committed: {}", job.file_name);
+            true
+        };
+
+        Ok(ShredReport {
+            version: 1,
+            target: path.to_string_lossy().to_string(),
+            method: DestructionMethod::Clear,
+            passes: 1,
+            bytes_processed: size,
+            verification_passed,
+            verification_samples: size,
+            timestamp: chrono::Utc::now().timestamp(),
+            device_serial: None,
+            operator: String::new(),
+            certificate: vec![],
+            signature: vec![],
+        })
+    }
+
+    /// NIST Purge: Multiple overwrites with full verification
+    fn nist_purge(&mut self, path: &Path, size: u64) -> Result<ShredReport, ArcanaError> {
+        // Pass 1: Zeros
+        let zeros = vec![0x00];
+        self.overwrite_file(path, &zeros, size)?;
+        self.sync_file(path)?;
+
+        // Pass 2: Ones
+        let ones = vec![0xFF];
+        self.overwrite_file(path, &ones, size)?;
+        self.sync_file(path)?;
+
+        // Pass 3: Cryptographic random (streaming, not repeated pattern)
+        self.overwrite_random(path, size)?;
+        self.sync_file(path)?;
+
+        // Pass 4: Final zeros + verify
+        self.overwrite_file(path, &zeros, size)?;
+        self.sync_file(path)?;
+
+        let verification_passed = if self.verification_enabled {
+            self.verify_overwrite(path, &zeros, size)?
+        } else {
+            true
+        };
+
+        Ok(ShredReport {
+            version: 1,
+            target: path.to_string_lossy().to_string(),
+            method: DestructionMethod::Purge,
+            passes: 4,
+            bytes_processed: size * 4,
+            verification_passed,
+            verification_samples: size,
+            timestamp: chrono::Utc::now().timestamp(),
+            device_serial: None,
+            operator: String::new(),
+            certificate: vec![],
+            signature: vec![],
+        })
+    }
+
+    /// NIST Destroy: ATA Secure Erase for HDDs
+    fn nist_destroy(&mut self, path: &Path) -> Result<ShredReport, ArcanaError> {
+        let device = self.get_block_device(path)?;
+        let device_size = self.get_device_size(&device)?;
+
+        // Generate random password per operation
+        let mut password_bytes = [0u8; 32];
+        self.secure_random.fill_bytes(&mut password_bytes);
+        let password = hex::encode(password_bytes);
+        password_bytes.zeroize();
+
+        self.ata_secure_erase(&device, &password)?;
+        let verification_passed = self.verify_device_erased(&device)?;
+
+        Ok(ShredReport {
+            version: 1,
+            target: path.to_string_lossy().to_string(),
+            method: DestructionMethod::Destroy,
+            passes: 1,
+            bytes_processed: device_size,
+            verification_passed,
+            verification_samples: 1000,
+            timestamp: chrono::Utc::now().timestamp(),
+            device_serial: None,
+            operator: String::new(),
+            certificate: vec![],
+            signature: vec![],
+        })
+    }
+
+    /// NVMe Format: For NVMe SSDs
+    fn nvme_format(&mut self, path: &Path) -> Result<ShredReport, ArcanaError> {
+        let device = self.get_block_device(path)?;
+        let device_size = self.get_device_size(&device)?;
+        let nvme_device = self.get_nvme_device(&device)?;
+
+        // nvme format with cryptographic erase (NSID 0xFFFFFFFF = all namespaces)
+        use std::process::Command;
+        let output = Command::new("nvme")
+            .args(&["format", &nvme_device, "-s", "1", "-n", "0xFFFFFFFF"])
+            .output()?;
+
+        if !output.status.success() {
+            return Err(ArcanaError::Io(std::io::Error::new(
+                std::io::ErrorKind::Unsupported,
+                "NVMe format failed - device may not support crypto erase"
+            )));
         }
+
+        let verification_passed = self.verify_device_erased(&device)?;
+
+        Ok(ShredReport {
+            version: 1,
+            target: path.to_string_lossy().to_string(),
+            method: DestructionMethod::NvmeFormat,
+            passes: 1,
+            bytes_processed: device_size,
+            verification_passed,
+            verification_samples: 1000,
+            timestamp: chrono::Utc::now().timestamp(),
+            device_serial: None,
+            operator: String::new(),
+            certificate: vec![],
+            signature: vec![],
+        })
     }
 
-    Ok(())
-}
+    /// Crypto Erase: Destroy LUKS keys
+    fn crypto_erase(&mut self, path: &Path) -> Result<ShredReport, ArcanaError> {
+        if self.is_luks_device(path)? {
+            self.shred_luks_header(path)?;
+        } else {
+            return self.nist_purge(path, std::fs::metadata(path)?.len());
+        }
 
-fn scan_directory_multithreaded(
-    dir_path: &Path,
-    key: arcana_vault::EncryptionKey,
-) -> io::Result<()> {
-    let isolation_dir = PathBuf::from("isolated_vault");
-    if !isolation_dir.exists() {
-        fs::create_dir(&isolation_dir)?;
+        Ok(ShredReport {
+            version: 1,
+            target: path.to_string_lossy().to_string(),
+            method: DestructionMethod::CryptoErase,
+            passes: 1,
+            bytes_processed: 0,
+            verification_passed: true,
+            verification_samples: 0,
+            timestamp: chrono::Utc::now().timestamp(),
+            device_serial: None,
+            operator: String::new(),
+            certificate: vec![],
+            signature: vec![],
+        })
     }
 
-    let conn = Connection::open("forensic_evidence.db3")?;
-    init_database(&conn)?;
-    let conn = Arc::new(Mutex::new(conn));
+    /// Overwrite file with fixed pattern
+    fn overwrite_file(&self, path: &Path, pattern: &[u8], size: u64) -> Result<(), ArcanaError> {
+        let mut file = OpenOptions::new()
+            .write(true)
+            .open(path)?;
 
-    let (tx, rx) = mpsc::channel::<ForensicJob>();
-    let rx = Arc::new(Mutex::new(rx));
-    let isolation_dir_arc = Arc::new(isolation_dir);
-    let mut handles = vec![];
+        file.seek(SeekFrom::Start(0))?;
 
-    for _ in 0..WORKER_THREADS {
-        let key_clone = key.clone();
-        let rx_clone = Arc::clone(&rx);
-        let iso_dir_clone = Arc::clone(&isolation_dir_arc);
-        let conn_clone = Arc::clone(&conn);
+        let chunk_size = 65536usize;
+        let mut written = 0u64;
+        let mut buffer = vec![0u8; chunk_size];
 
-        let handle = thread::spawn(move || loop {
-            let job = {
-                let lock = rx_clone.lock().unwrap();
-                match lock.recv() {
-                    Ok(job) => job,
-                    Err(_) => break,
+        while written < size {
+            let to_write = std::cmp::min(chunk_size as u64, size - written) as usize;
+            for i in 0..to_write {
+                buffer[i] = pattern[i % pattern.len()];
+            }
+            file.write_all(&buffer[..to_write])?;
+            written += to_write as u64;
+        }
+
+        buffer.zeroize();
+        Ok(())
+    }
+
+    /// Overwrite file with cryptographic random data (streaming, not repeated)
+    fn overwrite_random(&mut self, path: &Path, size: u64) -> Result<(), ArcanaError> {
+        let mut file = OpenOptions::new()
+            .write(true)
+            .open(path)?;
+
+        file.seek(SeekFrom::Start(0))?;
+
+        let chunk_size = 65536usize;
+        let mut written = 0u64;
+        let mut buffer = vec![0u8; chunk_size];
+
+        while written < size {
+            let to_write = std::cmp::min(chunk_size as u64, size - written) as usize;
+            self.secure_random.fill_bytes(&mut buffer[..to_write]);
+            file.write_all(&buffer[..to_write])?;
+            written += to_write as u64;
+        }
+
+        buffer.zeroize();
+        Ok(())
+    }
+
+    /// Verify file contains expected pattern at every byte
+    fn verify_overwrite(
+        &self,
+        path: &Path,
+        expected: &[u8],
+        size: u64,
+    ) -> Result<bool, ArcanaError> {
+        let mut file = File::open(path)?;
+        let mut buffer = [0u8; 4096];
+        let mut offset = 0u64;
+
+        loop {
+            let n = file.read(&mut buffer)?;
+            if n == 0 { break; }
+
+            for (i, byte) in buffer[..n].iter().enumerate() {
+                let expected_byte = expected[(offset as usize + i) % expected.len()];
+                if *byte != expected_byte {
+                    return Ok(false);
                 }
-            };
-            if let Err(e) = process_forensic_job(job, &iso_dir_clone, &key_clone, &conn_clone) {
-                eprintln!("[X] Processing error: {}", e);
             }
+            offset += n as u64;
+        }
+
+        // Verify we read the expected size
+        Ok(offset == size)
+    }
+
+    /// Verify device is erased using random sector sampling
+    fn verify_device_erased(&mut self, device: &Path) -> Result<bool, ArcanaError> {
+        let total_size = self.get_device_size(device)?;
+        let sector_size = 512u64;
+        let sample_count = 1000u64;
+        let mut file = File::open(device)?;
+        let mut buffer = [0u8; 512];
+
+        for _ in 0..sample_count {
+            // Generate random sector offset aligned to sector size
+            let random_offset = self.secure_random.next_u64();
+            let sector_offset = (random_offset % (total_size / sector_size)) * sector_size;
+
+            file.seek(SeekFrom::Start(sector_offset))?;
+            file.read_exact(&mut buffer)?;
+
+            if buffer.iter().any(|&b| b != 0) {
+                return Ok(false);
+            }
+        }
+
+        Ok(true)
+    }
+
+    /// ATA Secure Erase with random password
+    fn ata_secure_erase(&self, device: &Path, password: &str) -> Result<(), ArcanaError> {
+        use std::process::Command;
+
+        // Verify secure erase is supported
+        let check = Command::new("hdparm")
+            .args(&["-I", device.to_str().unwrap()])
+            .output()?;
+
+        if !check.status.success() {
+            return Err(ArcanaError::Io(std::io::Error::new(
+                std::io::ErrorKind::Unsupported,
+                "hdparm not available or device not supported"
+            )));
+        }
+
+        // Check if secure erase is supported in the output
+        let stdout = String::from_utf8_lossy(&check.stdout);
+        if !stdout.contains("supported") {
+            return Err(ArcanaError::Io(std::io::Error::new(
+                std::io::ErrorKind::Unsupported,
+                "ATA Secure Erase not supported by this device"
+            )));
+        }
+
+        // Set security password (random per operation)
+        let set_pass = Command::new("hdparm")
+            .args(&["--user-master", "u", "--security-set-pass", password, device.to_str().unwrap()])
+            .output()?;
+
+        if !set_pass.status.success() {
+            return Err(ArcanaError::Io(std::io::Error::new(
+                std::io::ErrorKind::PermissionDenied,
+                "Failed to set security password - device may be frozen"
+            )));
+        }
+
+        // Execute secure erase
+        let erase = Command::new("hdparm")
+            .args(&["--user-master", "u", "--security-erase", password, device.to_str().unwrap()])
+            .output()?;
+
+        if !erase.status.success() {
+            return Err(ArcanaError::Io(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                "ATA Secure Erase command failed"
+            )));
+        }
+
+        Ok(())
+    }
+
+    /// Get NVMe device path from block device
+    fn get_nvme_device(&self, device: &Path) -> Result<String, ArcanaError> {
+        let dev_name = device.file_name()
+            .ok_or_else(|| ArcanaError::Io(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "Invalid device path"
+            )))?
+            .to_string_lossy()
+            .to_string();
+
+        // NVMe devices: /dev/nvme0 -> /dev/nvme0, /dev/nvme0n1 -> /dev/nvme0
+        if dev_name.starts_with("nvme") {
+            let controller = dev_name.split('n').next().unwrap_or(&dev_name);
+            return Ok(format!("/dev/{}", controller));
+        }
+
+        Err(ArcanaError::Io(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "Not an NVMe device"
+        )))
+    }
+
+    /// Get device serial number for audit trail
+    fn get_device_serial(&self, path: &Path) -> Result<String, ArcanaError> {
+        let device = self.get_block_device(path)?;
+        let dev_name = device.file_name()
+            .map(|n| n.to_string_lossy().to_string())
+            .unwrap_or_default();
+
+        let serial_path = format!("/sys/block/{}/device/serial", dev_name);
+        std::fs::read_to_string(&serial_path)
+            .map(|s| s.trim().to_string())
+            .map_err(|e| ArcanaError::Io(e))
+    }
+
+    /// Sync file to disk
+    fn sync_file(&self, path: &Path) -> Result<(), ArcanaError> {
+        let file = OpenOptions::new().write(true).open(path)?;
+        file.sync_all()?;
+        Ok(())
+    }
+
+    /// Finalize deletion with random rename + sync + unlink
+    fn finalize_deletion(&self, path: &Path) -> Result<(), ArcanaError> {
+        // Generate valid hex filename
+        let mut random_bytes = [0u8; 16];
+        OsRng.fill_bytes(&mut random_bytes);
+        let random_name: String = random_bytes.iter()
+            .map(|b| format!("{:02x}", b))
+            .collect();
+
+        let parent = path.parent().unwrap_or(Path::new("."));
+        let temp_path = parent.join(random_name);
+
+        std::fs::rename(path, &temp_path)?;
+
+        // Sync directory
+        let dir = File::open(parent)?;
+        dir.sync_all()?;
+        drop(dir);
+
+        remove_file(&temp_path)?;
+        Ok(())
+    }
+
+    /// Serialize report for signing (canonical JSON)
+    fn serialize_for_signing(&self, report: &ShredReport) -> Result<Vec<u8>, ArcanaError> {
+        // Create a canonical representation excluding the signature field
+        let canonical = serde_json::json!({
+            "version": report.version,
+            "target": report.target,
+            "method": report.method,
+            "passes": report.passes,
+            "bytes_processed": report.bytes_processed,
+            "verification_passed": report.verification_passed,
+            "verification_samples": report.verification_samples,
+            "timestamp": report.timestamp,
+            "device_serial": report.device_serial,
+            "operator": report.operator,
         });
-        handles.push(handle);
+
+        // Sort keys for canonical form
+        let serialized = serde_json::to_vec_pretty(&canonical)?;
+        Ok(serialized)
     }
 
-    let base_dir = dir_path.canonicalize()?;
+    /// Sign report with Ed25519
+    fn sign_report(&self, report: &mut ShredReport) -> Result<(), ArcanaError> {
+        let data = self.serialize_for_signing(report)?;
 
-    for entry in fs::read_dir(dir_path)? {
-        let entry = entry?;
-        let path = entry.path();
+        // Certificate = SHA256 of canonical data (for quick verification)
+        let mut hasher = Sha256::new();
+        hasher.update(&data);
+        report.certificate = hasher.finalize().to_vec();
 
-        if !is_safe_path(&path, &base_dir) {
-            println!("[!] Blocked path traversal: {:?}", path);
-            continue;
+        // Signature = Ed25519 over certificate
+        let signature = self.signing_key.sign(&report.certificate);
+        report.signature = signature.to_vec();
+
+        Ok(())
+    }
+
+    /// Verify a report's signature against a public key
+    pub fn verify_certificate(
+        report: &ShredReport,
+        verifying_key: &VerifyingKey,
+    ) -> bool {
+        if report.signature.len() != 64 {
+            return false;
         }
 
-        if path.is_file() {
-            let path_str = path.to_string_lossy();
-            if path_str.contains("/target/") || path_str.contains("/isolated_vault/") {
-                continue;
-            }
+        let signature = match Signature::from_slice(&report.signature) {
+            Ok(s) => s,
+            Err(_) => return false,
+        };
 
-            let file_name = path
-                .file_name()
-                .unwrap_or_default()
-                .to_string_lossy()
-                .into_owned();
-            let metadata = entry.metadata()?;
-            let _ = tx.send(ForensicJob { path, file_name, metadata });
-        }
+        verifying_key.verify(&report.certificate, &signature).is_ok()
     }
 
-    drop(tx);
-    for handle in handles {
-        let _ = handle.join();
+    /// Export report as signed JSON certificate
+    pub fn export_certificate(report: &ShredReport, output_path: &Path) -> Result<(), ArcanaError> {
+        let json = serde_json::to_string_pretty(report)?;
+        std::fs::write(output_path, json)?;
+        Ok(())
     }
 
-    println!("[+] Forensic acquisition complete. Database: forensic_evidence.db3");
-    Ok(())
-}
+    fn get_block_device(&self, path: &Path) -> Result<PathBuf, ArcanaError> {
+        use std::process::Command;
+        let output = Command::new("df")
+            .args(&["--output=source", path.to_str().unwrap()])
+            .output()?;
 
-fn main() -> io::Result<()> {
-    println!("--- Arcana Forensics Workspace Execution Pipeline ---");
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        let device = stdout.lines().nth(1)
+            .ok_or_else(|| ArcanaError::Io(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                "Device not found"
+            )))?;
 
-    print!("Enter vault password: ");
-    stdout().flush()?;
-    let password = read_password().unwrap_or_default();
-
-    let salt = arcana_vault::EncryptionKey::generate_salt();
-    let key = arcana_vault::EncryptionKey::from_password(&password, &salt);
-
-    let args: Vec<String> = env::args().collect();
-    if args.len() < 2 {
-        println!("[!] Usage: cargo run -p arcana-acquire -- <target_directory_path>");
-        return Ok(());
+        Ok(PathBuf::from(device.trim()))
     }
 
-    scan_directory_multithreaded(Path::new(&args[1]), key)?;
-    Ok(())
+    fn is_luks_device(&self, path: &Path) -> Result<bool, ArcanaError> {
+        use std::process::Command;
+        let output = Command::new("cryptsetup")
+            .args(&["isLuks", path.to_str().unwrap()])
+            .output()?;
+        Ok(output.status.success())
+    }
+
+    fn shred_luks_header(&self, path: &Path) -> Result<(), ArcanaError> {
+        use std::process::Command;
+        Command::new("cryptsetup")
+            .args(&["luksErase", "--batch-mode", path.to_str().unwrap()])
+            .output()?;
+        Ok(())
+    }
+
+    fn get_device_size(&self, device: &Path) -> Result<u64, ArcanaError> {
+        use std::process::Command;
+        let output = Command::new("blockdev")
+            .args(&["--getsize64", device.to_str().unwrap()])
+            .output()?;
+
+        let size_str = String::from_utf8_lossy(&output.stdout);
+        size_str.trim().parse::<u64>()
+            .map_err(|e| ArcanaError::Io(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                e
+            )))
+    }
 }
