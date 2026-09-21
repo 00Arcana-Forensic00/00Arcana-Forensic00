@@ -3,31 +3,69 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Arcana Forensics — pricing</title>
+  <title>Arcana Forensics — premium licensing</title>
+  <style>
+    body { font-family: Georgia, serif; max-width: 52rem; margin: 2rem auto; padding: 0 1.2rem; color: #0b1522; background: #f4f1ea; }
+    h1 { font-size: 1.7rem; }
+    article { border: 1px solid #203b58; padding: 1rem 1.1rem; margin: 1rem 0; background: #fff; }
+    .price { font-size: 1.25rem; }
+    a { color: #126395; }
+    .note { color: #33475f; font-size: .95rem; }
+  </style>
 </head>
 <body>
   <p><a href="./index.html">Home</a> · <a href="./try.html">Field test</a></p>
-  <h1>Packets and seats</h1>
-  <p>Source stays MIT. Cards are taken by Stripe, not by the acquire tool.</p>
-  <h2>Open source packet</h2>
-  <p>Free. Synthetic demo under <code>demo/opensource/</code>.</p>
-  <p><a href="https://github.com/mitchell5584dm-tech/00Arcana-Forensic00/archive/refs/heads/main.zip">Download main.zip</a></p>
-  <h2>Field trial — 14 days</h2>
-  <p>Packet AF-FT-2026-0921. Same cap as <code>demo/trial/</code>: 5 files, 1 MiB, synthetic only.</p>
-  <p><a id="trial-link" href="#stripe-pending">Start trial on Stripe</a></p>
-  <h2>Lab seat</h2>
-  <p>Paid operator seat after trial. Still air-gapped. No evidence upload.</p>
-  <p><a id="lab-link" href="#stripe-pending">Pay lab seat on Stripe</a></p>
-  <p id="stripe-note">Stripe Payment Links are not pasted yet. Add them in <code>site/stripe.config.js</code> after creating the products in the Dashboard.</p>
+  <p>AUDIT-GRADE LICENSING · AF-FT-2026-0921</p>
+  <h1>Premium seats. Air-gapped code.</h1>
+  <p>Community Edition is the public MIT tree. Paid tiers fund review, support, and human services. Cards are taken by Stripe, never by the acquire tool.</p>
+
+  <article>
+    <h2>Community Edition</h2>
+    <p class="price">Free</p>
+    <p>Current open-source tier. Builds credibility with security researchers. Synthetic demo pack only.</p>
+    <p><a href="https://github.com/mitchell5584dm-tech/00Arcana-Forensic00/archive/refs/heads/main.zip">Download Community zip</a></p>
+  </article>
+
+  <article>
+    <h2>Professional License</h2>
+    <p class="price">$3,500 / year / seat</p>
+    <p>Boutique forensics firms and solo practitioners. Optional 14-day Stripe trial aligned to packet AF-FT-2026-0921.</p>
+    <p><a id="pro-link" href="#stripe-pending">Checkout Professional on Stripe</a></p>
+  </article>
+
+  <article>
+    <h2>Enterprise License</h2>
+    <p class="price">$35,000 / year</p>
+    <p>Law firms and corporate security. Unlimited seats inside one organization. No public evidence upload.</p>
+    <p><a id="ent-link" href="#stripe-pending">Checkout Enterprise on Stripe</a></p>
+  </article>
+
+  <article>
+    <h2>Government / Federal</h2>
+    <p class="price">Custom quote from $150,000 / year</p>
+    <p>Requires the compliance set the agency names: FedRAMP, CJIS, and State Department ITAR when those regimes apply. Not a self-serve Payment Link.</p>
+    <p><a href="mailto:mitchell5584.dm@gmail.com?subject=Arcana%20Federal%20quote">Request a federal quote</a></p>
+  </article>
+
+  <article>
+    <h2>Professional services</h2>
+    <p class="price">$250–$500 / hour</p>
+    <p>Deployment, training, and separately scoped expert-witness engagement. Testimony is a human service, not a software output.</p>
+    <p><a id="svc-link" href="mailto:mitchell5584.dm@gmail.com?subject=Arcana%20professional%20services">Book services</a></p>
+  </article>
+
+  <p class="note" id="stripe-note">Stripe Payment Links are not pasted yet. Create yearly products at $3,500/seat and $35,000/org, then put the buy.stripe.com URLs in site/stripe.config.js.</p>
   <script src="./stripe.config.js"></script>
   <script>
     (function () {
       var c = window.ARCANA_STRIPE || {};
-      var trial = document.getElementById("trial-link");
-      var lab = document.getElementById("lab-link");
       var note = document.getElementById("stripe-note");
-      if (c.trialUrl) { trial.href = c.trialUrl; note.hidden = true; }
-      if (c.labSeatUrl) { lab.href = c.labSeatUrl; note.hidden = true; }
+      var pro = document.getElementById("pro-link");
+      var ent = document.getElementById("ent-link");
+      var svc = document.getElementById("svc-link");
+      if (c.professionalUrl) { pro.href = c.professionalUrl; note.hidden = true; }
+      if (c.enterpriseUrl) { ent.href = c.enterpriseUrl; note.hidden = true; }
+      if (c.servicesUrl) { svc.href = c.servicesUrl; }
     })();
   </script>
 </body>
