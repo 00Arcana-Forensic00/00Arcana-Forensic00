@@ -11,6 +11,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@1.75.0
+      - name: Generate lockfile for Cargo 1.75
+        run: cargo generate-lockfile
       - name: Test workspace
         run: cargo test --workspace
       - name: Build acquire CLI
