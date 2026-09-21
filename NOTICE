@@ -1,0 +1,14 @@
+Arcana Forensics
+Copyright (c) 2026 Arcana-Forensics
+
+This product is licensed under the MIT License. See LICENSE.
+SPDX-License-Identifier: MIT
+
+Third-party Rust crates remain under their own licenses as recorded in Cargo.lock.
+
+Demo and trial packs are synthetic evaluation materials. They are not
+evidence and are not a paid license key.
+
+Field-test paperwork: docs/FIELD_TEST.md
+Packet ID: AF-FT-2026-0921
+Issued: 21 September 2026

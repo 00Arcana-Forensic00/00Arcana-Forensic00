@@ -1,0 +1,52 @@
+name: field-test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "17 11 * * *"
+  workflow_dispatch:
+
+jobs:
+  field-test:
+    runs-on: ubuntu-latest
+    env:
+      ARCANA_VAULT_PASSWORD: trial-pack-passphrase
+      CARGO_TERM_COLOR: always
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.75.0
+      - name: Unit tests
+        run: cargo test --workspace
+      - name: Build acquire CLI
+        run: cargo build -p arcana-acquire
+      - name: Generate magic-byte samples
+        run: python3 demo/scripts/make_evidence.py
+      - name: Acquire open-source demo pack
+        run: |
+          ./target/debug/arcana-acquire acquire \
+            --path demo/opensource/01-acquire/evidence \
+            --out "$RUNNER_TEMP/arcana-field-case" \
+            --operator "ci-field-test" \
+            --case-id "af-ft-2026-0921" \
+            --max-bytes 1048576
+      - name: Verify sealed case
+        run: |
+          ./target/debug/arcana-acquire verify \
+            --case "$RUNNER_TEMP/arcana-field-case" \
+            --password "$ARCANA_VAULT_PASSWORD"
+      - name: Write confirmation artifact
+        run: |
+          {
+            echo "packet=AF-FT-2026-0921"
+            echo "commit=${GITHUB_SHA}"
+            echo "result=PASS"
+            echo "operator=ci-field-test"
+            date -u +"confirmed_utc=%Y-%m-%dT%H:%M:%SZ"
+          } > "$RUNNER_TEMP/field-test-confirmation.txt"
+          cat "$RUNNER_TEMP/field-test-confirmation.txt"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: field-test-confirmation
+          path: ${{ runner.temp }}/field-test-confirmation.txt
