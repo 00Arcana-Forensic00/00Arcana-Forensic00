@@ -1,0 +1,6 @@
+Arcana vault object v1
+magic     4 bytes  ARCN
+version   1 byte   0x01
+salt     16 bytes  random
+nonce    12 bytes  random, unique per object
+body      n bytes  AES-256-GCM ciphertext including 16-byte tag

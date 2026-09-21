@@ -1,0 +1,6 @@
+Arcana Forensics — trial pack terms
+1. Evaluation window is 14 days from first use of case id trial-14d-001.
+2. Pack is limited to five files and 1 MiB each.
+3. Materials are synthetic.
+4. The published passphrase is for this pack only.
+5. No warranty. Authorized lab use only.
