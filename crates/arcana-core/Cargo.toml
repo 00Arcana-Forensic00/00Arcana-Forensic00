@@ -1,0 +1,13 @@
+[package]
+name = "arcana-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Shared types, errors, hashing, and path safety for Arcana Forensics."
+
+[dependencies]
+sha2 = { workspace = true }
+thiserror = { workspace = true }
+hex = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
