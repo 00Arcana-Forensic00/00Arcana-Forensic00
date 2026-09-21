@@ -13,7 +13,7 @@ use arcana_core::{
 use arcana_custody::Ledger;
 use arcana_vault::{seal, unseal};
 
-#[derive(Parser, Debug)]
+#[derive(Parser)]
 #[command(
     name = "arcana-acquire",
     version = TOOL_VERSION,
@@ -24,7 +24,7 @@ struct Cli {
     command: Commands,
 }
 
-#[derive(Subcommand, Debug)]
+#[derive(Subcommand)]
 enum Commands {
     /// Copy regular files from an approved root into a sealed case directory.
     Acquire {
@@ -38,17 +38,17 @@ enum Commands {
         case_id: String,
         #[arg(long, default_value_t = DEFAULT_MAX_FILE_BYTES)]
         max_bytes: u64,
-        #[arg(long, env = "ARCANA_VAULT_PASSWORD")]
+        #[arg(long, env = "ARCANA_VAULT_PASSWORD", hide_env_values = true)]
         password: Option<String>,
     },
     /// Recompute hashes and verify the custody hash chain.
     Verify {
         #[arg(long)]
         case: PathBuf,
-        #[arg(long, env = "ARCANA_VAULT_PASSWORD")]
+        #[arg(long, env = "ARCANA_VAULT_PASSWORD", hide_env_values = true)]
         password: Option<String>,
     },
-    /// Print the case manifest as JSON.
+    /// Print the case manifest as JSON (relative paths only).
     ExportManifest {
         #[arg(long)]
         case: PathBuf,
@@ -93,12 +93,7 @@ fn acquire(
     let ledger_path = out.join("custody.sqlite");
     fs::create_dir_all(&vault_dir)?;
     let ledger = Ledger::open(&ledger_path)?;
-    ledger.append(
-        &operator,
-        "case-open",
-        &source.display().to_string(),
-        &sha256_bytes(case_id.as_bytes()),
-    )?;
+    ledger.append(&operator, "case-open", "source", &sha256_bytes(case_id.as_bytes()))?;
     let mut evidence = Vec::new();
     let mut skipped = 0u64;
     for entry in WalkDir::new(&source).follow_links(false).into_iter() {
@@ -113,8 +108,7 @@ fn acquire(
         if entry.file_type().is_dir() {
             continue;
         }
-        if let Err(err) = reject_special_file(path) {
-            eprintln!("skip: {err}");
+        if reject_special_file(path).is_err() {
             skipped += 1;
             continue;
         }
@@ -124,15 +118,13 @@ fn acquire(
         }
         let confined = match confined_path(&source, path) {
             Ok(p) => p,
-            Err(err) => {
-                eprintln!("skip: {err}");
+            Err(_) => {
                 skipped += 1;
                 continue;
             }
         };
         let meta = confined.metadata()?;
         if meta.len() > max_bytes {
-            eprintln!("skip oversized {} ({} bytes)", confined.display(), meta.len());
             skipped += 1;
             continue;
         }
@@ -155,7 +147,6 @@ fn acquire(
         out_file.sync_all()?;
         ledger.append(&operator, "ingest-seal", &rel, &digest)?;
         evidence.push(EvidenceRecord {
-            source_path: confined.display().to_string(),
             relative_path: rel,
             size_bytes: meta.len(),
             sha256: digest,
@@ -170,7 +161,6 @@ fn acquire(
         case_id,
         operator: operator.clone(),
         created_unix: unix_now(),
-        source_root: source.display().to_string(),
         evidence,
     };
     let manifest_bytes = serde_json::to_vec_pretty(&manifest)?;
@@ -186,7 +176,6 @@ fn acquire(
         "acquired {} file(s), skipped {skipped}, ledger events {n}, chain_ok={ok}",
         manifest.evidence.len()
     );
-    println!("case directory: {}", out.display());
     Ok(())
 }
 
@@ -204,12 +193,9 @@ fn verify(case: PathBuf, password: Option<String>) -> Result<(), ArcanaError> {
             let plain = unseal(&blob, &pw)?;
             let digest = sha256_bytes(&plain);
             if digest != ev.sha256 || plain.len() as u64 != ev.size_bytes {
-                eprintln!("mismatch: {}", ev.relative_path);
                 mismatches += 1;
             }
         }
-    } else {
-        println!("note: pass --password or ARCANA_VAULT_PASSWORD to unseal and re-hash vault blobs");
     }
     println!(
         "manifest files={}, ledger events={events}, chain_ok={chain_ok}, vault_mismatches={mismatches}",
