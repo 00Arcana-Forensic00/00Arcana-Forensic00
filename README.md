@@ -6,6 +6,12 @@ Air-gapped filesystem acquisition, AES-256-GCM vault isolation, and a SHA-256 ha
 
 This tree is a **compiling workspace**. The previous layout listed crates that did not exist and shipped a disk-wipe prototype as `arcana-acquire`. That destructive path is gone.
 
+## Inspection policy
+
+Review this pack through the **raw source** (`crates/*/src/`) and synthetic demo files only. Do not open live vault blobs, `custody.sqlite` from a real matter, or customer paths to “test” the tool. Policy: [docs/STATIC_REVIEW.md](docs/STATIC_REVIEW.md).
+
+Automated CI is hard-wired to `demo/opensource/01-acquire/evidence` and uploads only a one-line confirmation text file — never a case directory.
+
 ## Live field test (download this)
 
 | What | Link |
