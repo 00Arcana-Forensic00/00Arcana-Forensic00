@@ -1,6 +1,9 @@
-/target/
-/isolated_vault/
-**/*.rs.bk
-*.dat
-*.log
-*.enc
+/target
+**/*.sqlite
+**/*.sqlite-wal
+**/*.sqlite-shm
+.idea
+.vscode
+*.swp
+.env
+cases/

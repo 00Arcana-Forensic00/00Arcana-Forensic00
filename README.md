@@ -1,87 +1,58 @@
 # Arcana Forensics
 
-[![Rust](https://img.shields.io/badge/Rust-2021_Edition-orange?logo=rust&logoColor=white)](https://www.rust-lang.org/)
-[![License](https://img.shields.io/badge/License-MIT%20%2F%20Apache--2.0-blue)](LICENSE)
-[![Security: AES-256-GCM](https://img.shields.io/badge/Encryption-AES--256--GCM-green?logo=lock&logoColor=white)](#vault-architecture)
-[![Integrity: SHA-256](https://img.shields.io/badge/Hashing-SHA--256-red)](#chain-of-custody)
-[![Storage: SQLite](https://img.shields.io/badge/Ledger-rusqlite-blueviolet?logo=sqlite&logoColor=white)](#ledger--audit)
+Air-gapped filesystem acquisition, AES-256-GCM vault isolation, and a SHA-256 hash-chained custody ledger. Written in Rust.
 
-**Arcana Forensics** is a high-assurance digital forensics acquisition suite engineered in Rust. It captures, classifies, and seals evidence inside tamper-evident cryptographic containers with an automated chain-of-custody ledger.
+This tree is a **compiling workspace**. The previous layout listed crates that did not exist and shipped a disk-wipe prototype as `arcana-acquire`. That destructive path is gone.
 
----
-
-## Key Capabilities
-
-* **Zero Cloud Exposure:** Air-gapped operational model. Artifacts are sealed locally without outbound telemetry or network dependency.
-* **Cryptographic Enclave (`arcana-vault`):** Hardware-accelerated **AES-256-GCM** authenticated encryption ensures post-acquisition evidence confidentiality and tamper detection.
-* **Automated Chain of Custody:** Calculates cryptographic **SHA-256** checksums at the point of ingestion and enforces strict write-locks.
-* **Structured Ledger Tracking:** Commits acquisition metadata, epoch timestamps, and hashes to an embedded relational ledger (`rusqlite`) for defensible audit trails.
-* **Multi-Format Ingestion Engine:** Native discovery heuristics for archives (`.zip`, `.7z`, `.gz`), structured documents (`.pdf`, `.docx`, `.xlsx`), scripts (`.sh`, `.py`), and raw filesystem traces (`unallocated_space.dat`).
-
----
-
-## Architecture Overview
+## Layout
 
 ```text
-Target Filesystem / Block Device
-               │
-               ▼
-   [ arcana-acquire (CLI Engine) ]
-        │                  │
-        │ File Stream      │ Artifact Signatures
-        ▼                  ▼
- [ arcana-vault ]   [ Forensic Classifier ]
-  - AES-256-GCM      - Magic byte detection
-  - SHA-256 seal     - Dormancy & metadata analysis
-        │                  │
-        └─────────┬────────┘
-                  ▼
-   [ Synchronized Relational Ledger ]
-     (Local SQLite via rusqlite)
+crates/
+  arcana-core      shared errors, hashing, path confinement, magic hints
+  arcana-vault     stretched passphrase + AES-256-GCM seal / unseal
+  arcana-custody   SQLite append-only hash chain
+  arcana-acquire   CLI: acquire | verify | export-manifest
+```
 
-arcana-forensics/
-├── Cargo.toml                    # Workspace root
-├── crates/
-│   ├── arcana-core/              # NEW: Shared types, traits, errors
-│   │   └── src/
-│   │       ├── lib.rs
-│   │       ├── types.rs          # Evidence, Hash, Timestamp
-│   │       ├── traits.rs         # Sealer, Classifier, Ledger
-│   │       └── errors.rs         # Unified error types
-│   │
-│   ├── arcana-vault/             # Cryptographic sealing (OPEN SOURCE)
-│   │   └── src/
-│   │       ├── lib.rs
-│   │       ├── seal.rs           # AES-256-GCM sealing
-│   │       ├── verify.rs         # Integrity verification
-│   │       └── keymgmt.rs        # Basic key handling
-│   │
-│   ├── arcana-custody/           # Audit ledger (OPEN SOURCE)
-│   │   └── src/
-│   │       ├── lib.rs
-│   │       ├── ledger.rs         # SQLite schema & writes
-│   │       ├── chain.rs          # Hash chain verification
-│   │       └── report.rs         # Audit report generation
-│   │
-│   ├── arcana-acquire/           # CLI acquisition tool (OPEN SOURCE)
-│   │   └── src/
-│   │       ├── main.rs
-│   │       ├── commands/
-│   │       │   ├── acquire.rs    # Disk/file acquisition
-│   │       │   ├── verify.rs    # Verify sealed evidence
-│   │       │   └── export.rs    # Export to open formats
-│   │       └── classifiers/      # Basic file type detection
-│   │           ├── magic.rs
-│   │           └── mime.rs
-│   │
-│   └── arcana-plugins/           # PREMIUM — separate crate or workspace
-│       ├── Cargo.toml            # Private crate, not in main workspace
-│       ├── yara-engine/
-│       ├── memory-forensics/
-│       ├── registry-parser/
-│       └── cloud-connectors/
-│
-├── plugins/                      # Alternative: premium as path dependencies
-│   └── yara/                     # Only built with --features premium
-│
-└── Cargo.lock                    # Single lockfile for reproducibility
+## How to run
+
+```bash
+cargo test --workspace
+cargo build --release -p arcana-acquire
+
+export ARCANA_VAULT_PASSWORD='correct horse battery staple extra'
+./target/release/arcana-acquire acquire \
+  --path ./demo/opensource/01-acquire/evidence \
+  --out ./cases/demo \
+  --operator 'investigator' \
+  --case-id demo-001
+
+./target/release/arcana-acquire verify \
+  --case ./cases/demo \
+  --password "$ARCANA_VAULT_PASSWORD"
+```
+
+Requirements: Rust 1.75+, a C compiler (for bundled SQLite).
+
+## Vault format
+
+```
+ARCN | version:u8 | salt:16 | nonce:12 | AES-256-GCM(ciphertext || tag)
+```
+
+## What this tool will not do
+
+- It will not erase disks, issue ATA Secure Erase, format NVMe, or destroy LUKS headers.
+- It will not follow symlinks or copy device nodes.
+- It will not send telemetry.
+
+Use only on systems and files you are authorized to examine.
+
+## Demo packs
+
+| Pack | Path | Purpose |
+|---|---|---|
+| Open source | `demo/opensource/` | acquire / vault / custody / site samples |
+| Trial (14-day) | `demo/trial/` | 5-file cap, passphrase `trial-pack-passphrase`, enterprise schema preview |
+
+See `demo/README.md`.
