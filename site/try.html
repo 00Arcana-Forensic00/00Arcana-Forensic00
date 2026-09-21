@@ -6,11 +6,10 @@
   <title>Arcana Forensics — live field test</title>
 </head>
 <body>
-  <p>FIELD TEST PASS</p>
+  <p>FIELD TEST PASS · AF-FT-2026-0921</p>
   <h1>Run the live test in one clone.</h1>
   <p>Air-gapped Rust pipeline: acquire regular files, seal with AES-256-GCM, append a hash-chained custody ledger. Confirmed on commit a7fd388.</p>
-  <p><a href="https://github.com/mitchell5584dm-tech/00Arcana-Forensic00/archive/refs/heads/main.zip">Download source zip</a></p>
-  <p><a href="https://github.com/mitchell5584dm-tech/00Arcana-Forensic00/actions/runs/35586146734">Passing field-test run</a></p>
+  <p><a href="./index.html">Home</a> · <a href="./pricing.html">Licensing</a> · <a href="https://github.com/mitchell5584dm-tech/00Arcana-Forensic00/archive/refs/heads/main.zip">Download Community zip</a> · <a href="https://github.com/mitchell5584dm-tech/00Arcana-Forensic00/actions/runs/35586146734">Passing field-test run</a></p>
   <pre>git clone https://github.com/mitchell5584dm-tech/00Arcana-Forensic00.git
 cd 00Arcana-Forensic00
 python3 demo/scripts/make_evidence.py
@@ -19,6 +18,6 @@ cargo build -p arcana-acquire
 export ARCANA_VAULT_PASSWORD='trial-pack-passphrase'
 ./target/debug/arcana-acquire acquire --path demo/opensource/01-acquire/evidence --out ./cases/live-test --operator field-tester --case-id live-test-001
 ./target/debug/arcana-acquire verify --case ./cases/live-test --password "$ARCANA_VAULT_PASSWORD"</pre>
-  <p>MIT licensed. Synthetic samples only. This software does not wipe disks. Packet AF-FT-2026-0921.</p>
+  <p>Community Edition is MIT and free. Professional $3,500/seat/year. Enterprise $35,000/year. Government from $150,000. Services $250–$500/hour. Synthetic samples only. This software does not wipe disks. Cards stay on Stripe.</p>
 </body>
 </html>

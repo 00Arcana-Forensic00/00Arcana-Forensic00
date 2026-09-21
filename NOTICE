@@ -1,8 +1,17 @@
 Arcana Forensics
 Copyright (c) 2026 Arcana-Forensics
 
-This product is licensed under the MIT License. See LICENSE.
+Community Edition source is licensed under the MIT License. See LICENSE.
 SPDX-License-Identifier: MIT
+
+Paid entitlements (billed on Stripe, not in this tree):
+  Professional License    $3,500 / year / seat
+  Enterprise License      $35,000 / year (unlimited seats, one organization)
+  Government / Federal    custom quote from $150,000 / year
+  Professional services   $250–$500 / hour
+
+A Stripe receipt is a seat or organization entitlement. It is not a
+chain-of-custody exhibit and not expert testimony.
 
 Third-party Rust crates remain under their own licenses as recorded in Cargo.lock.
 
@@ -10,5 +19,7 @@ Demo and trial packs are synthetic evaluation materials. They are not
 evidence and are not a paid license key.
 
 Field-test paperwork: docs/FIELD_TEST.md
+Stripe catalog: docs/STRIPE.md
+Public pricing: https://arcana-forensics.com/site/pricing.html
 Packet ID: AF-FT-2026-0921
 Issued: 21 September 2026

@@ -2,15 +2,26 @@
 
 **Packet ID:** AF-FT-2026-0921  
 **Issued:** 21 September 2026  
-**Repository:** https://github.com/mitchell5584dm-tech/00Arcana-Forensic00
+**Repository:** https://github.com/mitchell5584dm-tech/00Arcana-Forensic00  
+**Domain:** https://arcana-forensics.com
 
 ## License that travels with the code
 
-The software is MIT-licensed. See `/LICENSE` and `/NOTICE`.
+Community Edition source is MIT. See `/LICENSE` and `/NOTICE`.
 
-MIT grants use, copy, modify, merge, publish, distribute, sublicense, and sale,
-provided the copyright notice and permission notice stay with the Software.
-The Software is provided **AS IS**, without warranty.
+Paid overlay (does not replace MIT on the public tree):
+
+| Tier | Price |
+|---|---|
+| Community Edition | Free |
+| Professional License | $3,500 / year / seat |
+| Enterprise License | $35,000 / year (unlimited seats, one org) |
+| Government / Federal | custom from $150,000 / year |
+| Professional services | $250–$500 / hour |
+
+Checkout: https://arcana-forensics.com/site/pricing.html  
+Stripe sees payer email and card only. It does not receive vault blobs or `custody.sqlite`.
+A payment receipt is not a custody exhibit. Expert-witness work is a separate human engagement.
 
 ## Field-test overlay (does not replace MIT)
 
@@ -18,7 +29,7 @@ The Software is provided **AS IS**, without warranty.
 - Trial window: 21 September 2026 through 5 October 2026 unless extended
 - Trial pack cap: 5 files, 1 MiB each
 - Published demo passphrase: `trial-pack-passphrase`
-- No disk wipe, no live customer data
+- No disk wipe, no live customer data, no card data in the CLI
 
 ## Automated field test
 
