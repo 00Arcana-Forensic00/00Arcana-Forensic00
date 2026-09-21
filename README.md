@@ -1,8 +1,36 @@
 # Arcana Forensics
 
+[![field-test](https://github.com/mitchell5584dm-tech/00Arcana-Forensic00/actions/workflows/field-test.yml/badge.svg)](https://github.com/mitchell5584dm-tech/00Arcana-Forensic00/actions/workflows/field-test.yml)
+
 Air-gapped filesystem acquisition, AES-256-GCM vault isolation, and a SHA-256 hash-chained custody ledger. Written in Rust.
 
 This tree is a **compiling workspace**. The previous layout listed crates that did not exist and shipped a disk-wipe prototype as `arcana-acquire`. That destructive path is gone.
+
+## Live field test (download this)
+
+| What | Link |
+|---|---|
+| **Download current `main`** | https://github.com/mitchell5584dm-tech/00Arcana-Forensic00/archive/refs/heads/main.zip |
+| Evaluator page | [site/try.html](site/try.html) |
+| Passing run | https://github.com/mitchell5584dm-tech/00Arcana-Forensic00/actions/runs/35586146734 |
+| Paperwork | [docs/FIELD_TEST.md](docs/FIELD_TEST.md) · packet **AF-FT-2026-0921** |
+
+Last automated confirmation: **PASS** on `a7fd388` at `2026-09-21T09:58:23Z` (`operator=ci-field-test`).
+
+```bash
+git clone https://github.com/mitchell5584dm-tech/00Arcana-Forensic00.git
+cd 00Arcana-Forensic00
+python3 demo/scripts/make_evidence.py
+cargo test --workspace
+cargo build -p arcana-acquire
+export ARCANA_VAULT_PASSWORD='trial-pack-passphrase'
+./target/debug/arcana-acquire acquire \
+  --path demo/opensource/01-acquire/evidence \
+  --out ./cases/live-test \
+  --operator field-tester \
+  --case-id live-test-001
+./target/debug/arcana-acquire verify --case ./cases/live-test
+```
 
 ## Layout
 
@@ -47,6 +75,10 @@ ARCN | version:u8 | salt:16 | nonce:12 | AES-256-GCM(ciphertext || tag)
 - It will not send telemetry.
 
 Use only on systems and files you are authorized to examine.
+
+## License
+
+MIT. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
 
 ## Demo packs
 
