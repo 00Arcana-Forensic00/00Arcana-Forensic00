@@ -1,0 +1,20 @@
+Arcana Forensics — single demo packet
+Packet ID: AF-DEMO-001
+Domain: https://arcana-forensics.com
+Source: https://github.com/mitchell5584dm-tech/00Arcana-Forensic00/archive/refs/heads/main.zip
+
+Need: Rust 1.75+ and a C compiler.
+
+  git clone https://github.com/mitchell5584dm-tech/00Arcana-Forensic00.git
+  cd 00Arcana-Forensic00
+  cargo build -p arcana-acquire
+  export ARCANA_VAULT_PASSWORD='trial-pack-passphrase'
+  ./target/debug/arcana-acquire acquire \
+    --path demo/single/evidence \
+    --out ./cases/demo-001 \
+    --operator demo-operator \
+    --case-id demo-001
+  ./target/debug/arcana-acquire verify --case ./cases/demo-001
+
+Expected: chain_ok=true, vault_mismatches=0
+Synthetic files only. Do not point --path at a live matter.

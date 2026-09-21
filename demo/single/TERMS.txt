@@ -1,0 +1,3 @@
+AF-DEMO-001 — Community Edition demo.
+Synthetic files only. Not evidence. MIT source.
+This software does not wipe disks.
