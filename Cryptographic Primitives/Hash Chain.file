@@ -1,0 +1,5 @@
+Entry 0 (genesis):
+  hash_chain = SHA-256("ARCANA_GENESIS" || timestamp || operator)
+
+Entry N:
+  hash_chain = SHA-256(Entry[N-1].hash_chain || timestamp || operation_data)
