@@ -1,4 +1,5 @@
 # Security Policy
+<<<<<<< HEAD
 
 ## Supported Versions
 
@@ -83,3 +84,5 @@ Security practices align with:
 We thank the following researchers for responsible disclosure:
 
 - [Your name here] - [Vulnerability description]
+=======
+# Report vulnerabilities to: security@arcana-forensics.com
