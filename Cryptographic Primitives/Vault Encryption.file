@@ -1,0 +1,3 @@
+Key = Argon2id(password, salt, m=64MB, t=3, p=4)
+Ciphertext = AES-256-GCM(plaintext, key, nonce)
+Vault = "ARCN" || version || salt || nonce || ciphertext || tag
