@@ -1,0 +1,12 @@
+# Architecture Deep-Dive
+
+## Design Principles
+
+1. **Zero Trust:** No component trusts another without cryptographic verification
+2. **Fail Secure:** Any error condition defaults to safe state (no acquisition)
+3. **Auditability:** Every operation is logged with hash-chain verification
+4. **Minimalism:** Fewest dependencies possible, all audited
+
+## Component Interactions
+
+### Acquisition Flow
