@@ -7,8 +7,6 @@ labels: bug
 
 ## Description
 
-Describe the issue.
-
 ## Steps To Reproduce
 
 1.
