@@ -7,3 +7,24 @@
 *.swp
 .env
 cases/
+
+# Local files
+creds.json
+installed.txt
+verify_legal.py
+
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Environment files
+.env
+.env.*
+
+# Keys and certificates
+*.pem
+*.key
+
+# Local archives
+*.zip

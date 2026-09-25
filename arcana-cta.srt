@@ -1,0 +1,39 @@
+1
+00:00:00,200 --> 00:00:01,217
+Ask any forensic suite
+
+2
+00:00:01,217 --> 00:00:02,067
+one question:
+
+3
+00:00:02,067 --> 00:00:02,850
+what did you send?
+
+4
+00:00:03,200 --> 00:00:04,620
+Zero telemetry.
+
+5
+00:00:04,620 --> 00:00:05,662
+MIT source.
+
+6
+00:00:05,662 --> 00:00:07,650
+Air-gapped by design.
+
+7
+00:00:08,200 --> 00:00:09,488
+Start free.
+
+8
+00:00:09,488 --> 00:00:12,650
+Upgrade when your cases do.
+
+9
+00:00:13,200 --> 00:00:14,050
+Evidence acquisition
+
+10
+00:00:14,050 --> 00:00:14,850
+without the cloud.

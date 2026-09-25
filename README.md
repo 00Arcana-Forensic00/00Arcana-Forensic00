@@ -96,7 +96,7 @@ le.
  -python3 demo/scripts/make_evidence.py
  -cargo test --workspace
  -cargo build -p arcana-acquire
- -export ARCANA_VAULT_PASSWORD='trial-pack-passphrase'
+ -export ARCANA_VAULT_PASSWORD='REPLACE_WITH_PASSPHRASE'
  -./target/debug/arcana-acquire acquire \
  -  --path demo/opensource/01-acquire/evidence \
  -  --out ./cases/live-test \
@@ -167,7 +167,7 @@ le.
  -| Pack | Path | Purpose |
  -|---|---|---|
  -| Community / open source | `demo/opensource/` | acquire / vault / custody / site samples |
- -| Professional trial (14-day) | `demo/trial/` | 5-file cap, passphrase `trial-pack-passphrase` |
+ -| Professional trial (14-day) | `demo/trial/` | 5-file cap, passphrase `REPLACE_WITH_PASSPHRASE` |
  +  --path demo/opensource/01-acquire/evidence \
  +  --out ./cases/test-run \
  +  --operator "forensic-analyst" \

@@ -1,2 +1,2 @@
 # Trial — vault
-Passphrase: trial-pack-passphrase
+Passphrase: REPLACE_WITH_PASSPHRASE

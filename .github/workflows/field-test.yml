@@ -12,7 +12,7 @@ jobs:
   field-test:
     runs-on: ubuntu-latest
     env:
-      ARCANA_VAULT_PASSWORD: trial-pack-passphrase
+      ARCANA_VAULT_PASSWORD: REPLACE_WITH_PASSPHRASE
       CARGO_TERM_COLOR: always
     steps:
       - uses: actions/checkout@v4

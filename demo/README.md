@@ -19,7 +19,7 @@ Paid Enterprise ($35,000/year) and Government (from $150,000/year) do not ship e
 Published trial passphrase (synthetic only):
 
 ```
-trial-pack-passphrase
+REPLACE_WITH_PASSPHRASE
 ```
 
 Licensing: https://arcana-forensics.com/site/pricing.html

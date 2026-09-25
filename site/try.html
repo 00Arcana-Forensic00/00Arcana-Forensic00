@@ -15,7 +15,7 @@ cd 00Arcana-Forensic00
 python3 demo/scripts/make_evidence.py
 cargo test --workspace
 cargo build -p arcana-acquire
-export ARCANA_VAULT_PASSWORD='trial-pack-passphrase'
+export ARCANA_VAULT_PASSWORD='REPLACE_WITH_PASSPHRASE'
 ./target/debug/arcana-acquire acquire --path demo/opensource/01-acquire/evidence --out ./cases/live-test --operator field-tester --case-id live-test-001
 ./target/debug/arcana-acquire verify --case ./cases/live-test --password "$ARCANA_VAULT_PASSWORD"</pre>
   <p>Community Edition is MIT and free. Professional $3,500/seat/year. Enterprise $35,000/year. Government from $150,000. Services $250–$500/hour. Synthetic samples only. This software does not wipe disks. Cards stay on Stripe.</p>

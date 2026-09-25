@@ -53,7 +53,7 @@ Try it (synthetic files only):
   cd 00Arcana-Forensic00
   cargo test --workspace
   cargo build -p arcana-acquire
-  export ARCANA_VAULT_PASSWORD='trial-pack-passphrase'
+  export ARCANA_VAULT_PASSWORD='REPLACE_WITH_PASSPHRASE'
   ./target/debug/arcana-acquire acquire \
     --path demo/single/evidence \
     --out ./cases/demo-001 \

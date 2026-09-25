@@ -28,7 +28,7 @@ A payment receipt is not a custody exhibit. Expert-witness work is a separate hu
 - Synthetic files only (`demo/` or other authorized lab samples)
 - Trial window: 21 September 2026 through 5 October 2026 unless extended
 - Trial pack cap: 5 files, 1 MiB each
-- Published demo passphrase: `trial-pack-passphrase`
+- Published demo passphrase: `REPLACE_WITH_PASSPHRASE`
 - No disk wipe, no live customer data, no card data in the CLI
 
 ## Automated field test
