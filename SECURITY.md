@@ -36,7 +36,7 @@ Passphrases must be at least 12 characters. Prefer `ARCANA_VAULT_PASSWORD` from 
 
 ## Reporting a vulnerability
 
-Email `mitchell5584.dm@gmail.com` with:
+Email `security@arcana-forensics.com' with:
 
 - affected commit SHA
 - reproduction steps

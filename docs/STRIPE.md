@@ -29,7 +29,7 @@ Cancel: https://arcana-forensics.com/site/checkout-cancel.html
 2. **Arcana Enterprise** — recurring yearly, unit amount `3500000` cents USD, quantity 1 (org).
    Success URL: `/site/checkout-success.html?sku=ent`.
 3. **Arcana Services retainer** (optional) — invoice or Payment Link; do not auto-charge hourly from the static site.
-4. Government stays **Sales-led**. No public Payment Link. Button goes to `mailto:mitchell5584.dm@gmail.com?subject=Arcana%20Federal%20quote`.
+4. Government stays **Sales-led**. No public Payment Link. Button goes to `mailto:sales@arcana-forensics.com?subject=Arcana%20Federal%20Quote`.
 
 Do not put `sk_live` or `sk_test` in this repository.
 Paste only `https://buy.stripe.com/...` Payment Links into `site/stripe.config.js`.
