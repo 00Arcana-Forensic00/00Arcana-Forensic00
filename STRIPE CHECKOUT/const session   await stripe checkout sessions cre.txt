@@ -1,0 +1,7 @@
+const session = await stripe.checkout.sessions.create({
+  line_items: [{ price: 'price_prof_annual', quantity: 1 }],
+  mode: 'subscription',
+  discounts: [{ promotion_code: 'GRANDOPENING' }], // Apply here
+  success_url: 'https://Arcana-Forensics.com/success',
+  cancel_url: 'https://Arcana-Forensics.com/pricing',
+});

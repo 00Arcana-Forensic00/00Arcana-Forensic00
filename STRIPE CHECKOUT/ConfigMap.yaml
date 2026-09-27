@@ -1,0 +1,119 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: arcana-product-catalog
+  namespace: production
+data:
+  products.yaml: |
+    products:
+      - id: prod_community
+        name: "Arcana Forensics — Community"
+        description: "Open-source digital forensics acquisition and custody management. Air-gapped filesystem acquisition, AES-256-GCM vault isolation, SHA-256 hash-chained custody ledger. Written in Rust. MIT License. No telemetry."
+        tier: community
+        license_type: open_source
+        support_level: github_issues
+        seats: unlimited
+        file_cap: none
+        export_control_required: false
+        prices:
+          - id: price_community_free
+            amount: 0
+            currency: usd
+            type: one_time
+        features:
+          - Full source code access
+          - Community support via GitHub
+          - Complete documentation
+          - Unlimited cases
+          - No file caps
+          - Air-gapped operation
+          - AES-256-GCM encryption
+          - SHA-256 custody chain
+
+      - id: prod_professional
+        name: "Arcana Forensics — Professional"
+        description: "Commercial forensic acquisition platform for solo practitioners. Professional-grade cryptographic custody with priority support. Annual subscription. Authorization attestation required."
+        tier: professional
+        license_type: commercial_subscription
+        support_level: email_48h_sla
+        seats: "1"
+        file_cap: none
+        export_control_required: true
+        authorization_attestation_required: true
+        prices:
+          - id: price_prof_annual
+            amount: 350000
+            currency: usd
+            type: recurring
+            interval: year
+            trial_days: 14
+        features:
+          - Unlimited cases
+          - No file caps
+          - Priority email support (48-hour SLA)
+          - Single seat license
+          - Multiple workstation activation
+          - Chain-of-custody documentation templates
+          - Daubert-ready technical specifications
+          - Quarterly security updates
+
+      - id: prod_enterprise
+        name: "Arcana Forensics — Enterprise"
+        description: "Scalable forensic acquisition infrastructure for law firms and corporate security. Multi-seat deployment with API access. Annual subscription. Export control compliance required."
+        tier: enterprise
+        license_type: enterprise_agreement
+        support_level: priority_24h_sla
+        seats: unlimited
+        file_cap: none
+        export_control_required: true
+        authorization_attestation_required: true
+        api_access: true
+        sso_enabled: true
+        prices:
+          - id: price_ent_annual
+            amount: 3500000
+            currency: usd
+            type: recurring
+            interval: year
+        features:
+          - Unlimited seats organization-wide
+          - REST API access
+          - Custom custody schema development
+          - Priority support (24-hour SLA)
+          - SAML 2.0 / OIDC SSO integration
+          - Multi-tenant case management
+          - Automated custody report generation
+          - Integration with Relativity, Nuix, Autopsy
+          - White-label reporting options
+          - Dedicated account manager
+          - Annual security assessment included
+
+      - id: prod_government
+        name: "Arcana Forensics — Federal/Government"
+        description: "Hardened forensic acquisition for law enforcement and military. Air-gapped deployment, FIPS compliance consultation. Custom quote only. US Government or authorized contractors only."
+        tier: government
+        license_type: federal_contract
+        support_level: 24_7_hotline
+        seats: negotiated
+        file_cap: none
+        export_control_required: true
+        us_government_only: true
+        fips_compliance: consultation_included
+        classified_deployment: supported
+        prices:
+          - id: price_gov_custom
+            amount: 0
+            currency: usd
+            type: quote_only
+            pricing_model: custom_quote
+        features:
+          - Perpetual license option available
+          - On-site installation and configuration
+          - Customized training programs
+          - FedRAMP compliance consultation
+          - CJIS compliance consultation
+          - State Department ITAR compliance
+          - Classified environment deployment support
+          - Source code escrow available
+          - Liability indemnification (negotiated)
+          - 24/7 emergency support hotline

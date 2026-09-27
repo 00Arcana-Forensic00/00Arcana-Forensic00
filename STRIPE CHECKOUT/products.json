@@ -1,0 +1,176 @@
+{
+  "products": [
+    {
+      "id": "prod_community",
+      "name": "Arcana Forensics — Community",
+      "description": "Open-source digital forensics acquisition and custody management. Air-gapped filesystem acquisition, AES-256-GCM vault isolation, SHA-256 hash-chained custody ledger. Written in Rust. MIT License. No telemetry. Full source auditability. User attests to authorized use only.",
+      "metadata": {
+        "tier": "community",
+        "license_type": "open_source",
+        "support_level": "github_issues",
+        "seats": "unlimited",
+        "file_cap": "none",
+        "export_control_required": "false"
+      },
+      "prices": [
+        {
+          "id": "price_community_free",
+          "unit_amount": 0,
+          "currency": "usd",
+          "type": "one_time",
+          "metadata": {
+            "delivery_method": "direct_download",
+            "license_key_required": "false"
+          }
+        }
+      ],
+      "features": [
+        "Full source code access",
+        "Community support via GitHub",
+        "Complete documentation",
+        "Unlimited cases",
+        "No file caps",
+        "Air-gapped operation",
+        "AES-256-GCM encryption",
+        "SHA-256 custody chain"
+      ]
+    },
+    {
+      "id": "prod_professional",
+      "name": "Arcana Forensics — Professional",
+      "description": "Commercial forensic acquisition platform for solo practitioners and boutique firms. Professional-grade cryptographic custody with priority support and expert witness documentation. Annual subscription. User attestation of authorized use required. Export control compliance required.",
+      "metadata": {
+        "tier": "professional",
+        "license_type": "commercial_subscription",
+        "support_level": "email_48h_sla",
+        "seats": "1",
+        "file_cap": "none",
+        "export_control_required": "true",
+        "authorization_attestation_required": "true"
+      },
+      "prices": [
+        {
+          "id": "price_prof_annual",
+          "unit_amount": 350000,
+          "currency": "usd",
+          "type": "recurring",
+          "recurring": {
+            "interval": "year",
+            "interval_count": 1
+          },
+          "metadata": {
+            "delivery_method": "license_key_email",
+            "trial_days": 14,
+            "cancellation_policy": "end_of_period"
+          }
+        }
+      ],
+      "features": [
+        "Unlimited cases",
+        "No file caps",
+        "Priority email support (48-hour SLA)",
+        "Single seat license",
+        "Multiple workstation activation",
+        "Chain-of-custody documentation templates",
+        "Daubert-ready technical specifications",
+        "Quarterly security updates",
+        "Commercial license (non-MIT)",
+        "Binary distribution with documentation"
+      ]
+    },
+    {
+      "id": "prod_enterprise",
+      "name": "Arcana Forensics — Enterprise",
+      "description": "Scalable forensic acquisition infrastructure for law firms, corporate security, and incident response. Multi-seat deployment with API access, custom schemas, and dedicated account management. Annual subscription. Export control and authorization attestation required.",
+      "metadata": {
+        "tier": "enterprise",
+        "license_type": "enterprise_agreement",
+        "support_level": "priority_24h_sla",
+        "seats": "unlimited",
+        "file_cap": "none",
+        "export_control_required": "true",
+        "authorization_attestation_required": "true",
+        "api_access": "true",
+        "sso_enabled": "true"
+      },
+      "prices": [
+        {
+          "id": "price_ent_annual",
+          "unit_amount": 3500000,
+          "currency": "usd",
+          "type": "recurring",
+          "recurring": {
+            "interval": "year",
+            "interval_count": 1
+          },
+          "metadata": {
+            "delivery_method": "license_key_email",
+            "onboarding_included": "4_hour_virtual",
+            "dedicated_account_manager": "true",
+            "annual_security_assessment": "true"
+          }
+        }
+      ],
+      "features": [
+        "Unlimited seats organization-wide",
+        "REST API access",
+        "Custom custody schema development",
+        "Priority support (24-hour SLA)",
+        "SAML 2.0 / OIDC SSO integration",
+        "Multi-tenant case management",
+        "Automated custody report generation",
+        "Integration with Relativity, Nuix, Autopsy",
+        "White-label reporting options",
+        "Dedicated account manager",
+        "Annual security assessment included",
+        "Quarterly security audits",
+        "Onboarding training (4-hour virtual)"
+      ]
+    },
+    {
+      "id": "prod_government",
+      "name": "Arcana Forensics — Federal/Government",
+      "description": "Hardened forensic acquisition for law enforcement, intelligence, and military. Air-gapped deployment, FIPS compliance consultation, and Federal evidentiary standards. Custom quote only. US Government or authorized contractors only. DD-254 or equivalent authorization required. Export license verification mandatory.",
+      "metadata": {
+        "tier": "government",
+        "license_type": "federal_contract",
+        "support_level": "24_7_hotline",
+        "seats": "negotiated",
+        "file_cap": "none",
+        "export_control_required": "true",
+        "us_government_only": "true",
+        "fips_compliance": "consultation_included",
+        "classified_deployment": "supported"
+      },
+      "prices": [
+        {
+          "id": "price_gov_custom",
+          "unit_amount": 0,
+          "currency": "usd",
+          "type": "one_time",
+          "metadata": {
+            "pricing_model": "custom_quote",
+            "quote_required": "true",
+            "gsa_schedule": "pending",
+            "delivery_method": "contract_negotiation"
+          }
+        }
+      ],
+      "features": [
+        "Perpetual license option available",
+        "On-site installation and configuration",
+        "Customized training programs",
+        "FedRAMP compliance consultation",
+        "CJIS compliance consultation",
+        "State Department ITAR compliance",
+        "Classified environment deployment support",
+        "Source code escrow available",
+        "Liability indemnification (negotiated)",
+        "24/7 emergency support hotline",
+        "FIPS 140-2/3 validation consultation",
+        "DD-254 coordination",
+        "GSA Schedule eligibility (pending)"
+      ]
+    }
+  ]
+}

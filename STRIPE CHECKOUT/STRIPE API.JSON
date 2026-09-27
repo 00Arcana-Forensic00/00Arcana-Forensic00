@@ -1,0 +1,73 @@
+{
+  "products": [
+    {
+      "id": "prod_community",
+      "name": "Arcana Forensics — Community",
+      "description": "Open-source digital forensics acquisition and custody management. Air-gapped filesystem acquisition, AES-256-GCM vault isolation, SHA-256 hash-chained custody ledger. Written in Rust. MIT License. No telemetry. Full source auditability. User attests to authorized use only.",
+      "metadata": {
+        "tier": "community",
+        "license_type": "open_source",
+        "support_level": "github_issues",
+        "seats": "unlimited",
+        "file_cap": "none",
+        "export_control_required": "false"
+      },
+      "prices": [
+        {
+          "id": "price_community_free",
+          "unit_amount": 0,
+          "currency": "usd",
+          "type": "one_time",
+          "metadata": {
+            "delivery_method": "direct_download",
+            "license_key_required": "false"
+          }
+        }
+      ],
+      "features": [
+        "Full source code access",
+        "Community support via GitHub",
+        "Complete documentation",
+        "Unlimited cases",
+        "No file caps",
+        "Air-gapped operation",
+        "AES-256-GCM encryption",
+        "SHA-256 custody chain"
+      ]
+    },
+    {
+      "id": "prod_professional",
+      "name": "Arcana Forensics — Professional",
+      "description": "Commercial forensic acquisition platform for solo practitioners and boutique firms. Professional-grade cryptographic custody with priority support and expert witness documentation. Annual subscription. User attestation of authorized use required. Export control compliance required.",
+      "metadata": {
+        "tier": "professional",
+        "license_type": "commercial_subscription",
+        "support_level": "email_48h_sla",
+        "seats": "1",
+        "file_cap": "none",
+        "export_control_required": "true",
+        "authorization_attestation_required": "true"
+      },
+      "prices": [
+        {
+          "id": "price_prof_annual",
+          "unit_amount": 350000,
+          "currency": "usd",
+          "type": "recurring",
+          "recurring": {
+            "interval": "year",
+            "interval_count": 1
+          },
+          "metadata": {
+            "delivery_method": "license_key_email",
+            "trial_days": 14,
+            "cancellation_policy": "end_of_period"
+          }
+        }
+      ],
+      "features": [
+        "Unlimited cases",
+        "No file caps",
+        "Priority email support (48-hour SLA)",
+        "Single seat license",
+        "Multiple workstation activation
