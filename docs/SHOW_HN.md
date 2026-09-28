@@ -27,9 +27,9 @@ I needed a small offline pipeline: walk a directory of regular files, hash them,
 seal copies with AES-256-GCM, and append a local SHA-256 hash chain in SQLite.
 No cloud, no telemetry, no disk wipe.
 
-Repo: https://github.com/mitchell5584dm-tech/00Arcana-Forensic00
+Repo: https://github.com/00Arcana-Forensic00/00Arcana-Forensic00
 Site: https://arcana-forensics.com
-One-zip demo: https://github.com/mitchell5584dm-tech/00Arcana-Forensic00/archive/refs/heads/main.zip
+One-zip demo: https://github.com/00Arcana-Forensic00/00Arcana-Forensic00/archive/refs/heads/main.zip
 
 What it does
 - acquire: confined walk (no symlinks, no device nodes), SHA-256, seal to .arcv
@@ -49,7 +49,7 @@ What it does not do
 
 Try it (synthetic files only):
 
-  git clone https://github.com/mitchell5584dm-tech/00Arcana-Forensic00.git
+  git clone https://github.com/00Arcana-Forensic00/00Arcana-Forensic00.git
   cd 00Arcana-Forensic00
   cargo test --workspace
   cargo build -p arcana-acquire
