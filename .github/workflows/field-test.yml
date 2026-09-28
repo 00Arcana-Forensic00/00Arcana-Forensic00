@@ -1,0 +1,55 @@
+name: field-test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "17 11 * * *"
+  workflow_dispatch:
+
+jobs:
+  field-test:
+    runs-on: ubuntu-latest
+    env:
+      ARCANA_VAULT_PASSWORD: REPLACE_WITH_PASSPHRASE
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.75.0
+
+      - name: Test workspace
+        run: cargo test --workspace
+
+      - name: Build acquire CLI
+        run: cargo build -p arcana-acquire
+
+      - name: Recreate synthetic demo evidence
+        run: python3 demo/scripts/make_evidence.py
+
+      - name: Acquire demo evidence
+        run: |
+          ./target/debug/arcana-acquire acquire \
+            --path demo/opensource/01-acquire/evidence \
+            --out ./cases/ci-field-test \
+            --operator github-actions \
+            --case-id ci-field-test-${{ github.run_id }}
+
+      - name: Verify custody chain and vault integrity
+        run: |
+          ./target/debug/arcana-acquire verify \
+            --case ./cases/ci-field-test \
+            --password "$ARCANA_VAULT_PASSWORD"
+
+      - name: Write confirmation artifact
+        run: |
+          {
+            echo "packet: AF-FT-2026-0921"
+            echo "commit: ${{ github.sha }}"
+            echo "run_id: ${{ github.run_id }}"
+            echo "result: PASS"
+          } > field-test-confirmation.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: field-test-confirmation
+          path: field-test-confirmation.txt
