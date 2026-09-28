@@ -2,10 +2,219 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Arcana Forensics</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Arcana Forensics — evidence acquisition without the cloud</title>
+  <meta name="description" content="Air-gapped digital evidence acquisition in Rust. AES-256-GCM sealed vaults, SHA-256 hash-chained custody ledger. MIT-licensed Community edition, source on GitHub.">
+  <style>
+    :root {
+      --bg: #0b0f14;
+      --panel: #121821;
+      --border: #1f2a38;
+      --text: #e6edf3;
+      --muted: #93a4b8;
+      --accent: #4fb0ff;
+      --accent-dim: #2c6690;
+      --mono: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      line-height: 1.55;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .wrap { max-width: 46rem; margin: 0 auto; padding: 0 1.5rem; }
+
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 1.1rem 0;
+    }
+    .brand { display: flex; align-items: center; gap: 0.6rem; }
+    .brand img { width: 28px; height: 28px; border-radius: 6px; display: block; }
+    .brand span { font-weight: 600; letter-spacing: 0.01em; }
+
+    .badge {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      padding: 0.25rem 0.6rem;
+      border-radius: 999px;
+      margin: 2.2rem 0 1.1rem;
+    }
+    .badge a { color: var(--muted); }
+
+    h1 {
+      font-size: 2.1rem;
+      line-height: 1.2;
+      margin: 0 0 1rem;
+      letter-spacing: -0.01em;
+    }
+
+    .lede {
+      color: var(--muted);
+      font-size: 1.05rem;
+      max-width: 40rem;
+    }
+    .lede strong { color: var(--text); font-weight: 600; }
+
+    .cta-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.7rem;
+      margin: 1.6rem 0 2.6rem;
+    }
+    .btn {
+      font-family: var(--sans);
+      font-size: 0.92rem;
+      font-weight: 600;
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .btn:hover { text-decoration: none; border-color: var(--accent-dim); }
+    .btn.primary { background: var(--accent); color: #04141f; border-color: var(--accent); }
+    .btn.primary:hover { background: #6cbeff; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+      gap: 0.9rem;
+      margin: 0 0 2.6rem;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.1rem;
+    }
+    .card h3 {
+      margin: 0 0 0.35rem;
+      font-size: 0.95rem;
+      color: var(--text);
+    }
+    .card p {
+      margin: 0;
+      font-size: 0.87rem;
+      color: var(--muted);
+    }
+
+    .pricing {
+      border-top: 1px solid var(--border);
+      padding-top: 1.6rem;
+      margin-bottom: 2.6rem;
+    }
+    .pricing h2 {
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin: 0 0 1rem;
+    }
+    table.price-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+    }
+    table.price-table th, table.price-table td {
+      text-align: left;
+      padding: 0.55rem 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    table.price-table th { color: var(--muted); font-weight: 500; }
+
+    .disclosure {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: var(--muted);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.1rem;
+      margin-bottom: 3rem;
+    }
+    .disclosure p { margin: 0 0 0.4rem; }
+    .disclosure p:last-child { margin-bottom: 0; }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 1.5rem 0 3rem;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    footer a { color: var(--muted); }
+    footer a:hover { color: var(--accent); }
+  </style>
 </head>
 <body>
-  <p>This repo's live site is built from the <code>site/</code> directory (see <code>wrangler.toml</code>, <code>pages_build_output_dir = "site"</code>).</p>
-  <p>View it at <a href="https://arcana-forensics.com/">arcana-forensics.com</a>, or browse the source in <a href="./site/index.html">site/index.html</a>.</p>
+  <header>
+    <div class="wrap brand">
+      <img src="./arcana-forensics-official-logo.png" alt="Arcana Forensics">
+      <span>Arcana Forensics</span>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <span class="badge">FIELD TEST PASS · AF-FT-2026-0921 · <a href="https://github.com/00Arcana-Forensic00/00Arcana-Forensic00/actions/workflows/field-test.yml">verify on GitHub Actions</a></span>
+
+    <h1>Evidence acquisition without the cloud.</h1>
+    <p class="lede">
+      An air-gapped Rust pipeline that <strong>hashes, seals, and custody-chains</strong> evidence files
+      on the machine in front of you. No network calls, no telemetry, no disk-wipe capability —
+      just acquire → AES-256-GCM vault → SHA-256 hash-chained ledger.
+    </p>
+
+    <div class="cta-row">
+      <a class="btn primary" href="https://github.com/00Arcana-Forensic00/00Arcana-Forensic00/archive/refs/heads/main.zip">Download Community zip</a>
+      <a class="btn" href="./site/try.html">Run the field test</a>
+      <a class="btn" href="./site/pricing.html">Pricing</a>
+      <a class="btn" href="https://github.com/00Arcana-Forensic00/00Arcana-Forensic00">Source on GitHub</a>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h3>Acquire</h3>
+        <p>Confined directory walk — no symlinks, no device nodes followed. SHA-256 every file before it's touched.</p>
+      </div>
+      <div class="card">
+        <h3>Seal</h3>
+        <p>AES-256-GCM into a versioned vault blob. Key derived from your passphrase, never stored in the case directory.</p>
+      </div>
+      <div class="card">
+        <h3>Custody</h3>
+        <p>Every action appended to a local SHA-256 hash chain in SQLite. <code>verify</code> re-hashes and re-checks it end to end.</p>
+      </div>
+    </div>
+
+    <section class="pricing">
+      <h2>Licensing</h2>
+      <table class="price-table">
+        <tr><th>Community</th><td>Free · MIT license · full source</td></tr>
+        <tr><th>Professional</th><td>$3,500 / seat / year</td></tr>
+        <tr><th>Enterprise</th><td>$35,000 / year</td></tr>
+        <tr><th>Government</th><td>From $150,000 — contact sales</td></tr>
+      </table>
+    </section>
+
+    <div class="disclosure">
+      <p>This software does not wipe disks, does not follow symlinks, and does not phone home.</p>
+      <p>Payments are handled by Stripe on the pricing page — never inside the acquire tool, never in a case directory.</p>
+      <p>A Stripe receipt is not a chain-of-custody exhibit and not expert testimony.</p>
+    </div>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      Arcana Forensics · <a href="https://github.com/00Arcana-Forensic00/00Arcana-Forensic00">GitHub</a> · <a href="mailto:sales@arcana-forensics.com">sales@arcana-forensics.com</a>
+    </div>
+  </footer>
 </body>
 </html>
