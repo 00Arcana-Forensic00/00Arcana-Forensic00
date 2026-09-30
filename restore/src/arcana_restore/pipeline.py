@@ -38,8 +38,22 @@ def safe_name(name: str) -> str:
     return base[:80]
 
 
+def _refuse_link(path: str) -> None:
+    """Reject symlinks and junctions explicitly. O_NOFOLLOW does not exist on Windows,
+    so this check (not the open flag) is what protects there. A small check-then-open
+    window remains; run on directories only trusted users can write to."""
+    try:
+        st = os.lstat(path)
+    except OSError:
+        return  # missing: the open below reports it
+    is_junction = getattr(os.path, "isjunction", lambda p: False)(path)
+    if stat.S_ISLNK(st.st_mode) or is_junction:
+        raise imaging.ImageError("refusing to follow a symbolic link or junction")
+
+
 def read_regular_file(path: str) -> bytes:
     """Read a regular file without following symlinks; size-capped."""
+    _refuse_link(path)
     flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_CLOEXEC", 0)
     try:
         fd = os.open(path, flags)
@@ -63,7 +77,18 @@ def _write_new(path: str, data: bytes) -> None:
             fh.write(data)
             fh.flush()
             os.fsync(fh.fileno())
-        os.link(tmp, path)  # fails if the destination exists
+        try:
+            os.link(tmp, path)  # atomic, and fails if the destination exists
+        except FileExistsError:
+            raise
+        except OSError:
+            # Filesystem without hard links (FAT/exFAT USB drives, some network shares):
+            # fall back to exclusive create. Still never replaces an existing vault.
+            fd2 = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            with os.fdopen(fd2, "wb") as fh:
+                fh.write(data)
+                fh.flush()
+                os.fsync(fh.fileno())
     finally:
         try:
             os.unlink(tmp)
@@ -113,10 +138,9 @@ def process_file(path: str, vault_dir: str, passphrase: str, ledger: Ledger,
             kdf,
         )
         os.makedirs(vault_dir, mode=0o700, exist_ok=True)
-        out = os.path.join(vault_dir, f"{safe_name(src_name)}-{src_hash[:12]}.arcr")
+        out = os.path.join(vault_dir, f"evidence-{src_hash[:16]}-{os.urandom(3).hex()}.arcr")  # no source name (it stays in the encrypted manifest); suffix keeps identical files as separate exhibits
         _write_new(out, blob)
         ledger.append("evidence_sealed", {
-            "source_name": src_name,
             "source_sha256": src_hash,
             "vault": os.path.basename(out),
             "vault_sha256": sha256(blob),
@@ -128,7 +152,7 @@ def process_file(path: str, vault_dir: str, passphrase: str, ledger: Ledger,
         err = "a vault for this exact file already exists (refusing to overwrite)"
     except (imaging.ImageError, vault.VaultError, OSError) as exc:
         err = str(exc)
-    ledger.append("rejected", {"source_name": src_name, "source_sha256": src_hash, "reason": err})
+    ledger.append("rejected", {"source_sha256": src_hash, "reason": err})
     return Result(path, False, None, err, {}, (time.perf_counter() - t0) * 1000)
 
 
@@ -178,11 +202,13 @@ def extract(vault_path: str, passphrase: str, out_dir: str, only: tuple[str, ...
     ext = {"original": os.path.splitext(stem)[1] or ".bin", "restored": ".png", "mask": ".png", "manifest": ".json"}
     base = os.path.splitext(stem)[0]
     os.makedirs(out_dir, mode=0o700, exist_ok=True)
+    plan = [(role, os.path.join(out_dir, f"{base}.{role}{ext[role]}")) for role in only if role in entries]
+    for _, dest in plan:
+        _refuse_link(dest)
+        if not force and os.path.lexists(dest):
+            raise FileExistsError(f"{os.path.basename(dest)} already exists; nothing was written")
     written = []
-    for role in only:
-        if role not in entries:
-            continue
-        dest = os.path.join(out_dir, f"{base}.{role}{ext[role]}")
+    for role, dest in plan:
         flags = os.O_WRONLY | os.O_CREAT | (os.O_TRUNC if force else os.O_EXCL) | getattr(os, "O_NOFOLLOW", 0)
         fd = os.open(dest, flags, 0o600)
         with os.fdopen(fd, "wb") as fh:
@@ -192,6 +218,10 @@ def extract(vault_path: str, passphrase: str, out_dir: str, only: tuple[str, ...
 
 
 def read_regular_file_any(path: str) -> bytes:
+    try:
+        _refuse_link(path)
+    except imaging.ImageError as exc:
+        raise vault.VaultError(str(exc)) from None
     flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
     try:
         fd = os.open(path, flags)

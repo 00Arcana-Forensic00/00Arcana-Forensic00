@@ -20,15 +20,10 @@ jobs:
       run:
         shell: bash
     env:
-      # Optional signing. Without these secrets the installers are built unsigned.
-      WIN_CERT_PFX_BASE64: ${{ secrets.WIN_CERT_PFX_BASE64 }}
-      WIN_CERT_PASSWORD: ${{ secrets.WIN_CERT_PASSWORD }}
-      APPLE_CERT_P12_BASE64: ${{ secrets.APPLE_CERT_P12_BASE64 }}
-      APPLE_CERT_PASSWORD: ${{ secrets.APPLE_CERT_PASSWORD }}
-      APPLE_SIGN_IDENTITY: ${{ secrets.APPLE_SIGN_IDENTITY }}
-      APPLE_ID: ${{ secrets.APPLE_ID }}
-      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-      APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+      # Booleans only: the secret VALUES are attached to the individual signing steps below,
+      # so third-party packages installed during test/build never see them.
+      HAS_WIN_CERT: ${{ secrets.WIN_CERT_PFX_BASE64 != '' }}
+      HAS_APPLE_CERT: ${{ secrets.APPLE_CERT_P12_BASE64 != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -60,11 +55,15 @@ jobs:
 
       # ---- Windows: sign exes, build Inno Setup installer, sign it
       - name: Windows signing setup
-        if: runner.os == 'Windows' && env.WIN_CERT_PFX_BASE64 != ''
+        if: runner.os == 'Windows' && env.HAS_WIN_CERT == 'true'
+        env:
+          WIN_CERT_PFX_BASE64: ${{ secrets.WIN_CERT_PFX_BASE64 }}
         run: echo "$WIN_CERT_PFX_BASE64" | base64 -d > "$RUNNER_TEMP/cert.pfx"
       - name: Sign Windows executables
-        if: runner.os == 'Windows' && env.WIN_CERT_PFX_BASE64 != ''
+        if: runner.os == 'Windows' && env.HAS_WIN_CERT == 'true'
         shell: pwsh
+        env:
+          WIN_CERT_PASSWORD: ${{ secrets.WIN_CERT_PASSWORD }}
         run: |
           $st = (Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" | Select-Object -Last 1).FullName
           foreach ($f in "restore\dist\ArcanaRestore.exe","restore\dist\arcana-restore.exe") {
@@ -77,8 +76,10 @@ jobs:
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "/DAppVersion=$env:VERSION" restore\packaging\windows\arcana-restore.iss
           Copy-Item restore\dist\arcana-restore.exe restore\dist\arcana-restore-windows.exe
       - name: Sign Windows installer
-        if: runner.os == 'Windows' && env.WIN_CERT_PFX_BASE64 != ''
+        if: runner.os == 'Windows' && env.HAS_WIN_CERT == 'true'
         shell: pwsh
+        env:
+          WIN_CERT_PASSWORD: ${{ secrets.WIN_CERT_PASSWORD }}
         run: |
           $st = (Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" | Select-Object -Last 1).FullName
           & $st sign /f "$env:RUNNER_TEMP\cert.pfx" /p $env:WIN_CERT_PASSWORD /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 "restore\dist\ArcanaRestore-Setup-$env:VERSION.exe"
@@ -86,6 +87,13 @@ jobs:
       # ---- macOS: .app in a .dmg (sign + notarize when secrets exist)
       - name: macOS app and dmg
         if: runner.os == 'macOS'
+        env:
+          APPLE_CERT_P12_BASE64: ${{ secrets.APPLE_CERT_P12_BASE64 }}
+          APPLE_CERT_PASSWORD: ${{ secrets.APPLE_CERT_PASSWORD }}
+          APPLE_SIGN_IDENTITY: ${{ secrets.APPLE_SIGN_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
         run: |
           cd restore/dist
           rm -rf "Arcana Restore.app" && mv ArcanaRestore.app "Arcana Restore.app"
