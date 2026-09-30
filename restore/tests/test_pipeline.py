@@ -25,7 +25,8 @@ def test_seal_extract_original_is_byte_identical(evidence, tmp_path):
     assert restored is not None and restored.shape[:2] == (600, 800)
     manifest = json.load(open([p for p in out if p.endswith(".manifest.json")][0]))
     assert manifest["entries"]["original"]["sha256"] == pipeline.sha256(evidence.read_bytes())
-    assert (os.stat(r.vault_path).st_mode & 0o777) == 0o600
+    if os.name != "nt":  # Windows has no POSIX mode bits; it inherits the folder ACL
+        assert (os.stat(r.vault_path).st_mode & 0o777) == 0o600
 
 
 def test_extract_in_a_fresh_process(evidence, tmp_path):
@@ -95,3 +96,16 @@ def test_batch_directory_parallel(tmp_path):
     res = pipeline.process_batch(files, str(tmp_path / "v"), PW, 4, kdf=FAST_KDF)
     assert all(r.ok for r in res)
     assert Ledger(str(tmp_path / "v" / pipeline.LEDGER_NAME)).verify()[1] == 6
+
+
+def test_extract_refuses_symlinked_vault_and_symlinked_output(evidence, tmp_path):
+    vd, (r,) = run(evidence, tmp_path)
+    link = tmp_path / "vault_link.arcr"; link.symlink_to(r.vault_path)
+    with pytest.raises(vault.VaultError, match="symbolic link"):
+        pipeline.extract(str(link), PW, str(tmp_path / "o"))
+    out = tmp_path / "o2"; out.mkdir()
+    target = tmp_path / "victim.txt"; target.write_text("keep me")
+    (out / "receipt.original.png").symlink_to(target)
+    with pytest.raises(Exception):
+        pipeline.extract(r.vault_path, PW, str(out), force=True)
+    assert target.read_text() == "keep me"

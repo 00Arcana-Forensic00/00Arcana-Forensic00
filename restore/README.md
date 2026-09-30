@@ -22,6 +22,7 @@ The passphrase comes from `--passphrase-file`, `ARCANA_PASSPHRASE`, or a hidden 
 ## Security properties (and their limits)
 - **Format `ARCR` v1:** Argon2id (t=3, m=64 MiB, p=4, per-file salt) -> AES-256-GCM. The entire header, including KDF parameters, is authenticated. File names and hashes live only inside the encrypted manifest. Crafted headers are bounds-checked before any KDF work.
 - **Works across processes:** unlike the prototype, nothing depends on in-memory state; a vault opens anywhere with its passphrase.
+- **Windows:** the 0600 file mode is a no-op (files inherit the folder's ACL), so keep vaults in a per-user folder. Symlinks and junctions are refused by an explicit check, because Windows has no `O_NOFOLLOW`.
 - **Input hardening:** magic-byte check, 100 MiB and 100 MP limits, symlinks and non-regular files refused, no overwrite of existing vaults or extracted files, outputs created 0600, names sanitized.
 - **Custody ledger:** SHA-256 chain in `ledger.jsonl`, cross-process locked and fsynced. A chain cannot reveal removed *trailing* entries; record the printed head elsewhere (or anchor it, see `docs/ANCHORING.md`) and use `--expect-head`.
 - **Not provided:** a lost passphrase is unrecoverable by design. There is no key escrow, no secure memory wiping in Python, no protection against a compromised host, and no independent security audit yet. Do not describe it as audited or court-certified until it is.

@@ -38,8 +38,22 @@ def safe_name(name: str) -> str:
     return base[:80]
 
 
+def _refuse_link(path: str) -> None:
+    """Reject symlinks and junctions explicitly. O_NOFOLLOW does not exist on Windows,
+    so this check (not the open flag) is what protects there. A small check-then-open
+    window remains; run on directories only trusted users can write to."""
+    try:
+        st = os.lstat(path)
+    except OSError:
+        return  # missing: the open below reports it
+    is_junction = getattr(os.path, "isjunction", lambda p: False)(path)
+    if stat.S_ISLNK(st.st_mode) or is_junction:
+        raise imaging.ImageError("refusing to follow a symbolic link or junction")
+
+
 def read_regular_file(path: str) -> bytes:
     """Read a regular file without following symlinks; size-capped."""
+    _refuse_link(path)
     flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_CLOEXEC", 0)
     try:
         fd = os.open(path, flags)
@@ -183,6 +197,7 @@ def extract(vault_path: str, passphrase: str, out_dir: str, only: tuple[str, ...
         if role not in entries:
             continue
         dest = os.path.join(out_dir, f"{base}.{role}{ext[role]}")
+        _refuse_link(dest)
         flags = os.O_WRONLY | os.O_CREAT | (os.O_TRUNC if force else os.O_EXCL) | getattr(os, "O_NOFOLLOW", 0)
         fd = os.open(dest, flags, 0o600)
         with os.fdopen(fd, "wb") as fh:
@@ -192,6 +207,10 @@ def extract(vault_path: str, passphrase: str, out_dir: str, only: tuple[str, ...
 
 
 def read_regular_file_any(path: str) -> bytes:
+    try:
+        _refuse_link(path)
+    except imaging.ImageError as exc:
+        raise vault.VaultError(str(exc)) from None
     flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
     try:
         fd = os.open(path, flags)
