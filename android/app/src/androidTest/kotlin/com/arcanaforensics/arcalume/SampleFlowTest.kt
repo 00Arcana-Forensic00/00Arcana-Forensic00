@@ -1,7 +1,7 @@
 package com.arcanaforensics.arcalume
 
 import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.enableAccessibilityChecks
+import androidx.compose.ui.test.junit4.accessibility.enableAccessibilityChecks
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
