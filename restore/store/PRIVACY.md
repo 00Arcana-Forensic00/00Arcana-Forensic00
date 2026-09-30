@@ -12,7 +12,11 @@ reporting and no advertising, and the app does not connect to the internet.
 - **License keys** (direct-download edition) are checked on your device. The key, which
   contains the name and email you gave at checkout, is saved in your user settings folder
   so the app stays unlocked.
-- **Purchases** are handled by the store you buy from (Microsoft Store, Mac App Store) or
+- **Camera (Android)** is used only while you take a photo in the app. The photo is kept
+  exactly as the camera saved it, in the app's private storage, until you remove or seal it.
+- **Backups (Android)**: the app's storage is excluded from Google cloud backup and
+  device-to-device transfer, so evidence leaves the phone only when you export it.
+- **Purchases** are handled by the store you buy from (Google Play, Microsoft Store, Mac App Store) or
   by Stripe on our website. They process your payment details under their own policies;
   from a website purchase we keep your email, name and order number to issue and
   re-send your license key.
@@ -20,6 +24,7 @@ reporting and no advertising, and the app does not connect to the internet.
 Contact: privacy@arcana-forensics.com
 
 ## Store privacy answers
+- **Google Play Data safety:** No data collected, no data shared (details in `android/store/DATA_SAFETY.md`).
 - **Apple App Privacy:** Data Not Collected.
 - **Microsoft Store:** the app does not access, collect or transmit personal information;
   a privacy policy URL is still required, use the page above.

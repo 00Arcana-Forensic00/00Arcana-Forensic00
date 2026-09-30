@@ -1,0 +1,37 @@
+{
+ "canonical": [
+  {
+   "bytes": "{\"a\":\"\\u00e9\\u007f\\u001f\\\"\\\\/\",\"b\":[1,2.5,null,true]}",
+   "value": {
+    "a": "é\u001f\"\\/",
+    "b": [
+     1,
+     2.5,
+     null,
+     true
+    ]
+   }
+  },
+  {
+   "bytes": "{\"neg\":-0.000123,\"x\":0.1,\"y\":1e-05,\"z\":1234567.0}",
+   "value": {
+    "neg": -0.000123,
+    "x": 0.1,
+    "y": 1e-05,
+    "z": 1234567.0
+   }
+  }
+ ],
+ "keys": {
+  "bad_expiry": "ARC1.eyJlbWFpbCI6ImFubkBleGFtcGxlLmNvbSIsImV4cGlyZXMiOiJzb29uIiwiaWQiOiJsaWNfZml4dHVyZSIsImlzc3VlZCI6IjIwMjYtMDktMzAiLCJuYW1lIjoiQW5uIEV4YW1pbmVyIiwib3JkZXIiOiJmaXh0dXJlIiwicGxhbiI6InBybyIsInByb2R1Y3QiOiJhcmNhbHVtZSIsInNlYXRzIjoxLCJ2IjoxfQ.to7Xg0KpVQxEDfLxoOUOycARCy7dLeF0GXlrwpum3n3iMbERIrXAJlEVTSRAfrktrJzJ0Wz3xtmZ6CNM7-r9Cg",
+  "expired": "ARC1.eyJlbWFpbCI6ImFubkBleGFtcGxlLmNvbSIsImV4cGlyZXMiOiIyMDIwLTAxLTAxIiwiaWQiOiJsaWNfZml4dHVyZSIsImlzc3VlZCI6IjIwMjYtMDktMzAiLCJuYW1lIjoiQW5uIEV4YW1pbmVyIiwib3JkZXIiOiJmaXh0dXJlIiwicGxhbiI6InBybyIsInByb2R1Y3QiOiJhcmNhbHVtZSIsInNlYXRzIjoxLCJ2IjoxfQ.ILv-Dv4oBkaMz5lP4eB5yQyTCjcrl1-s9tD4FZfYsi8SlqoZIaqw4LiwkCIOdtKzEwV18p67hrU2SrCbAOfbDQ",
+  "forged": "ARC1.eyJlbWFpbCI6InhAZXhhbXBsZS5jb20iLCJwcm9kdWN0IjoiYXJjYWx1bWUiLCJ2IjoxfQ.svthnGQBw6Q4iAUsOf0ajQ9fDBYPMe8id6sB6YSBa-9-arhFfOlOKVo7-ifjPF5GXBtdzI2RGlyghflqBqGNCA",
+  "other_product": "ARC1.eyJlbWFpbCI6ImFubkBleGFtcGxlLmNvbSIsImV4cGlyZXMiOm51bGwsImlkIjoibGljX2ZpeHR1cmUiLCJpc3N1ZWQiOiIyMDI2LTA5LTMwIiwibmFtZSI6IkFubiBFeGFtaW5lciIsIm9yZGVyIjoiZml4dHVyZSIsInBsYW4iOiJwcm8iLCJwcm9kdWN0IjoiYXJjYW5hLXJlY29uIiwic2VhdHMiOjEsInYiOjF9.K0l6r4rH2UbJiwZ3UzrRggfUJ4D7vSTZmrBzcsCqRxlo841_ltkClIwCrMuQE28RAdk6TSZ5DZbbdlRGdhcHAg",
+  "valid": "ARC1.eyJlbWFpbCI6ImFubkBleGFtcGxlLmNvbSIsImV4cGlyZXMiOm51bGwsImlkIjoibGljX2ZpeHR1cmUiLCJpc3N1ZWQiOiIyMDI2LTA5LTMwIiwibmFtZSI6IkFubiBFeGFtaW5lciIsIm9yZGVyIjoiZml4dHVyZSIsInBsYW4iOiJwcm8iLCJwcm9kdWN0IjoiYXJjYWx1bWUiLCJzZWF0cyI6MSwidiI6MX0.TMKHrmFJ7TUR2LtzgJX2lIr4KHFaIuVn1TXwkegWmYU8eNNMOVHITe_arC8aQ3Lg1w6Toe8rUati58FnMj1hDg",
+  "valid_until_2030": "ARC1.eyJlbWFpbCI6ImFubkBleGFtcGxlLmNvbSIsImV4cGlyZXMiOiIyMDMwLTAxLTAxIiwiaWQiOiJsaWNfZml4dHVyZSIsImlzc3VlZCI6IjIwMjYtMDktMzAiLCJuYW1lIjoiQW5uIEV4YW1pbmVyIiwib3JkZXIiOiJmaXh0dXJlIiwicGxhbiI6InBybyIsInByb2R1Y3QiOiJhcmNhbHVtZSIsInNlYXRzIjoxLCJ2IjoxfQ.ro6Jaj9I43zghCPFqAIP-zfSyZ9Z456bLX0Pyv7-3SwIWpPHJ9L2MbtWmVBYfWrDXpYxa85ffyjWmn6zbdAeDA"
+ },
+ "ledger_entries": 3,
+ "ledger_head": "85508a44387130ea80ec193e3c388d2fe82313858ee5964f8135eb05b0aafab3",
+ "passphrase": "correct horse battery staple",
+ "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg="
+}

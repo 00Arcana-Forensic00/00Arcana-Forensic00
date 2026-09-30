@@ -199,9 +199,12 @@ def stretch_glare_halo(img: np.ndarray, glare: np.ndarray, min_contrast: int = 2
     if not glare.any():
         return img
     side = min(img.shape[:2])
-    halo_k = _odd(side / 7, 31)
-    halo = cv2.dilate(glare, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (halo_k, halo_k)))
-    halo = cv2.bitwise_and(halo, cv2.bitwise_not(glare)) > 0
+    # The ring is every pixel within side/14 of a glare core. A Euclidean distance
+    # transform finds it in linear time; dilating with a kernel that large took most
+    # of the run time on phone-camera-sized photos.
+    radius = _odd(side / 7, 31) // 2
+    dist = cv2.distanceTransform(cv2.bitwise_not(glare), cv2.DIST_L2, cv2.DIST_MASK_PRECISE)
+    halo = (dist <= radius) & (glare == 0)
     win, blur = _odd(side / 16, 15), _odd(side / 32, 9)
     out = img.copy()
     for c in range(img.shape[2]):
