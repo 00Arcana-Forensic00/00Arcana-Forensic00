@@ -33,7 +33,7 @@ class SampleFlowTest {
         rule.onRoot().tryPerformAccessibilityChecks()
         rule.onNodeWithText("Try a sample page").performScrollTo().performClick()
         awaitText("What Arcalume found and did")
-        rule.onNodeWithText("glare spot", substring = true).assertExists()
+        rule.onNodeWithText("glare spot", substring = true, useUnmergedTree = true).assertExists()
         rule.onRoot().tryPerformAccessibilityChecks()
         rule.onNodeWithText("Show filled areas").performScrollTo().performClick()
         rule.onNodeWithText("Show reading order").performScrollTo().performClick()
