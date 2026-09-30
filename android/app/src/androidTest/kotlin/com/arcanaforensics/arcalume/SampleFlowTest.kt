@@ -1,6 +1,10 @@
 package com.arcanaforensics.arcalume
 
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.ComposeTimeoutException
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.junit4.accessibility.enableAccessibilityChecks
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -28,18 +32,28 @@ class SampleFlowTest {
         rule.enableAccessibilityChecks()
         rule.onRoot().tryPerformAccessibilityChecks()
         rule.onNodeWithText("Try a sample page").performScrollTo().performClick()
-        rule.waitUntil(120_000) { rule.onAllNodes(hasText("What Arcalume found and did")).fetchSemanticsNodes().isNotEmpty() }
+        awaitText("What Arcalume found and did")
         rule.onNodeWithText("glare spot", substring = true).assertExists()
         rule.onRoot().tryPerformAccessibilityChecks()
         rule.onNodeWithText("Show filled areas").performScrollTo().performClick()
         rule.onNodeWithText("Show reading order").performScrollTo().performClick()
         rule.onRoot().tryPerformAccessibilityChecks()
-        rule.onNodeWithText("Seal as evidence").performScrollTo().performClick()   // free: the upgrade dialog
-        rule.onNodeWithText("This is a Pro feature").assertExists()
-        rule.onNodeWithText("See plans").performClick()
+        rule.onNodeWithText("Plan").performClick()   // a new install is inside the 180-day free Pro offer
+        rule.onNodeWithText("Pro, free for 180 more days", substring = true).assertExists()
         rule.onRoot().tryPerformAccessibilityChecks()
         rule.onNodeWithText("Vault").performClick()
         rule.onNodeWithText("Check the log").performScrollTo().performClick()
         rule.onRoot().tryPerformAccessibilityChecks()
+    }
+
+    /** Waits for [text]; on timeout, fails listing every text on screen (an error message, a stuck progress label). */
+    private fun awaitText(text: String, timeoutMs: Long = 180_000) {
+        try {
+            rule.waitUntil(timeoutMs) { rule.onAllNodes(hasText(text)).fetchSemanticsNodes().isNotEmpty() }
+        } catch (e: ComposeTimeoutException) {
+            val seen = rule.onAllNodes(SemanticsMatcher("any node") { true }, useUnmergedTree = true).fetchSemanticsNodes()
+                .flatMap { n -> n.config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text } }
+            throw AssertionError("\"$text\" did not appear within ${timeoutMs / 1000} s. On screen: $seen", e)
+        }
     }
 }

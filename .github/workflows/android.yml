@@ -88,7 +88,7 @@ jobs:
           target: google_apis
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          script: cd android && ./gradlew :app:connectedPlayDebugAndroidTest --no-daemon
+          script: cd android && ./gradlew :app:connectedPlayDebugAndroidTest --no-daemon || { adb logcat -d | grep -E 'Arcalume|AndroidRuntime|OpenCV|TestRunner|FATAL' | tail -300; exit 1; }
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
