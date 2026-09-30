@@ -7,3 +7,6 @@ local.properties
 *.apk
 *.aab
 captures/
+
+# Test fixture sealed with a public test passphrase (real vaults stay ignored, see ../.gitignore)
+!core/src/test/resources/fixtures/desktop.arcr
