@@ -30,3 +30,11 @@ __pycache__/
 *.zip
 *.egg-info/
 .pytest_cache/
+
+__pycache__/
+*.egg-info/
+.pytest_cache/
+*.arcr
+restore/build/
+restore/dist/
+restore/*.spec
