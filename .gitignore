@@ -33,3 +33,6 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 *.arcr
+restore/build/
+restore/dist/
+restore/*.spec

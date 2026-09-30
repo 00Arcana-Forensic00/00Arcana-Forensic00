@@ -34,3 +34,10 @@ Glare and deep shadow are found by thresholding, filtered to compact regions so 
 pip install -e './restore[test]' && pytest restore
 ```
 Tests cover round trips, tamper/truncation/forged-header rejection, wrong passphrase, fresh-process extraction, ledger edits and concurrency, hostile inputs and repair behavior.
+
+## Standalone executable
+```bash
+restore/packaging/build.sh          # builds restore/dist/arcana-restore (+ SHA256SUMS) for this OS
+python restore/packaging/smoke.py restore/dist/arcana-restore
+```
+The `restore-build` workflow (manual run, or a `restore-v*` tag) builds Linux, Windows and macOS executables and smoke-tests each one. PyInstaller output is OS-specific, so build on the target OS. Linux is verified; Windows and macOS builds have not been run yet, and the ledger file lock is POSIX-only (on Windows, concurrent *processes* are not serialized; threads are). Binaries are unsigned: code-sign and notarize before distributing to customers, and publish the SHA256SUMS.
