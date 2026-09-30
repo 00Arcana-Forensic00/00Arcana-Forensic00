@@ -1,0 +1,26 @@
+name: restore-build
+on:
+  workflow_dispatch:
+  push:
+    tags: ["restore-v*"]
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: restore/packaging/build.sh
+      - name: Smoke test the executable
+        run: python restore/packaging/smoke.py restore/dist/arcana-restore${{ matrix.os == 'windows-latest' && '.exe' || '' }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arcana-restore-${{ matrix.os }}
+          path: restore/dist/*
