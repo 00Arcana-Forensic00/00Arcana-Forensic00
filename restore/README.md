@@ -27,7 +27,7 @@ Store builds (`packaging/build.py --edition store`) are unlocked because the sto
 ```bash
 pip install ./restore
 arcana-restore process ./damaged_scans -o ./vault          # prompts for a passphrase (12+ chars)
-arcana-restore extract ./vault/receipt.png-ab12….arcr -o ./out
+arcana-restore extract ./vault/evidence-….arcr -o ./out
 arcana-restore verify-ledger --vault ./vault [--expect-head <hash>]
 arcana-restore inspect ./vault/….arcr                       # header only, no passphrase
 ```
@@ -42,8 +42,9 @@ The passphrase comes from `--passphrase-file`, `ARCANA_PASSPHRASE`, or a hidden 
 | `manifest` | source name, hashes, repair report, reading-order blocks |
 
 ## Security properties (and their limits)
-- **Format `ARCR` v1:** Argon2id (t=3, m=64 MiB, p=4, per-file salt) -> AES-256-GCM. The entire header, including KDF parameters, is authenticated. File names and hashes live only inside the encrypted manifest. Crafted headers are bounds-checked before any KDF work.
+- **Format `ARCR` v1:** Argon2id (t=3, m=64 MiB, p=4, per-file salt) -> AES-256-GCM. The entire header, including KDF parameters, is authenticated. File names and hashes live only inside the encrypted manifest (vault files are named `evidence-<hash>-<random>.arcr`, and the ledger records hashes only). Crafted headers are bounds-checked before any KDF work.
 - **Works across processes:** unlike the prototype, nothing depends on in-memory state; a vault opens anywhere with its passphrase.
+- **Windows:** the 0600 file mode is a no-op (files inherit the folder's ACL), so keep vaults in a per-user folder. Symlinks and junctions are refused by an explicit check, because Windows has no `O_NOFOLLOW`.
 - **Input hardening:** magic-byte check, 100 MiB and 100 MP limits, symlinks and non-regular files refused, no overwrite of existing vaults or extracted files, outputs created 0600, names sanitized.
 - **Custody ledger:** SHA-256 chain in `ledger.jsonl`, cross-process locked and fsynced. A chain cannot reveal removed *trailing* entries; record the printed head elsewhere (or anchor it, see `docs/ANCHORING.md`) and use `--expect-head`.
 - **Not provided:** a lost passphrase is unrecoverable by design. There is no key escrow, no secure memory wiping in Python, no protection against a compromised host, and no independent security audit yet. Do not describe it as audited or court-certified until it is.
@@ -66,6 +67,8 @@ recursive XY-cut over detected blocks (columns before rows), geometry only. The 
 pip install -e './restore[test]' && pytest restore
 ```
 Tests cover round trips, tamper/truncation/forged-header rejection, wrong passphrase, fresh-process extraction, ledger edits and concurrency, hostile inputs and repair behavior.
+
+**More:** `docs/SECURITY.md` (threat model, limitations, findings fixed), `docs/AUDIT_SCOPE.md` (brief for an external reviewer), `docs/SIGNING.md` (certificates and secrets).
 
 ## Desktop app and installers
 The installers ship the Arcalume window. The earlier Tk window is still available as `arcana-restore gui`.

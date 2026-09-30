@@ -15,3 +15,18 @@ jobs:
         run: cargo test --workspace
       - name: Build acquire CLI
         run: cargo build -p arcana-acquire
+
+  recon:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: recon
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install arcana-recon
+        run: pip install -e '.[test]'
+      - name: Test arcana-recon
+        run: pytest -q

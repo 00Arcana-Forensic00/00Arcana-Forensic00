@@ -16,6 +16,7 @@ object Evidence {
         "pixels marked in mask were synthesized by inpainting (they carry no original data). " +
         "original is byte-identical to the acquired source."
     private val UNSAFE = Regex("[^A-Za-z0-9._-]+")
+    private val rng = java.security.SecureRandom()
 
     data class Sealed(val vault: File, val vaultSha256: String, val ledgerEntry: Json.Obj, val report: Report)
 
@@ -47,8 +48,8 @@ object Evidence {
     }
 
     /**
-     * Seal already-recovered page data into `<vaultDir>/<name>-<hash12>.arcr` and append
-     * `evidence_sealed` to the ledger. Refuses to overwrite an existing vault.
+     * Seal already-recovered page data into `<vaultDir>/evidence-<hash16>-<random>.arcr` and
+     * append `evidence_sealed` to the ledger. Never overwrites an existing file.
      */
     fun seal(
         vaultDir: File, sourceName: String, original: ByteArray, restoredPng: ByteArray, maskPng: ByteArray,
@@ -59,20 +60,22 @@ object Evidence {
         ), passphrase, kdf)
         vaultDir.mkdirs()
         val srcHash = sha256Hex(original)
-        val out = File(vaultDir, "${safeName(sourceName)}-${srcHash.take(12)}.arcr")
+        // No source name on disk or in the log (it stays in the encrypted manifest); the random
+        // suffix keeps two copies of the same file as separate exhibits. Same rule as the desktop.
+        val out = File(vaultDir, "evidence-${srcHash.take(16)}-${hex(ByteArray(3).also(rng::nextBytes))}.arcr")
         writeNew(out, blob)
         val blobHash = sha256Hex(blob)
         val entry = Ledger(File(vaultDir, LEDGER_NAME)).append("evidence_sealed", Json.obj(
-            "source_name" to sourceName, "source_sha256" to srcHash, "vault" to out.name, "vault_sha256" to blobHash,
+            "source_sha256" to srcHash, "vault" to out.name, "vault_sha256" to blobHash,
             "status" to report.status.wire, "masked_fraction" to Json.Num(Json.pyFloat(report.maskedFraction, 6)),
         ))
         return Sealed(out, blobHash, entry, report)
     }
 
-    fun recordRejected(vaultDir: File, sourceName: String, original: ByteArray?, reason: String): Json.Obj {
+    fun recordRejected(vaultDir: File, original: ByteArray?, reason: String): Json.Obj {
         vaultDir.mkdirs()
         return Ledger(File(vaultDir, LEDGER_NAME)).append("rejected", Json.obj(
-            "source_name" to sourceName, "source_sha256" to original?.let(::sha256Hex), "reason" to reason,
+            "source_sha256" to original?.let(::sha256Hex), "reason" to reason,
         ))
     }
 

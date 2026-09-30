@@ -9,6 +9,7 @@ import kotlin.test.Test
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
@@ -98,10 +99,8 @@ class EngineTest {
         dir.listFiles()?.forEach { it.delete() }
         val pw = Fixtures.desktop["passphrase"]!!.str()
         val sealed = Evidence.seal(dir, "Receipt – März.png", original, restored, mask, man, rec.report, pw, Fixtures.FAST_KDF)
-        assertEquals("Receipt_M_rz.png-${sha256Hex(original).take(12)}.arcr", sealed.vault.name)
-        assertFailsWith<java.nio.file.FileAlreadyExistsException> {
-            Evidence.seal(dir, "Receipt – März.png", original, restored, mask, man, rec.report, pw, Fixtures.FAST_KDF)
-        }
+        assertTrue(Regex("evidence-${sha256Hex(original).take(16)}-[0-9a-f]{6}\\.arcr").matches(sealed.vault.name), sealed.vault.name)
+        assertFalse("rz" in File(dir, Evidence.LEDGER_NAME).readText(), "no source name in the log")
         val (m2, entries) = Evidence.open(sealed.vault.readBytes(), pw)
         assertContentEquals(original, entries.getValue("original"))
         assertEquals("repaired", m2["report"]!!.obj()["status"]!!.str())
