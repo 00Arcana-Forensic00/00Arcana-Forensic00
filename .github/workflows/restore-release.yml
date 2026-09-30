@@ -35,25 +35,37 @@ jobs:
         with: { python-version: "3.11" }
       - name: Version
         run: echo "VERSION=$(grep -m1 '^version' restore/pyproject.toml | cut -d'"' -f2)" >> "$GITHUB_ENV"
-      - name: Linux deps (Tk, Xvfb)
+      - name: Linux deps (Tk, Xvfb, WebKitGTK for the app window)
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y python3-tk xvfb
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-tk xvfb libgirepository-2.0-dev libcairo2-dev gir1.2-webkit2-4.1
+          pip install 'pywebview[gtk]'
       - name: Test
         run: |
-          pip install -e './restore[test,gui]'
+          pip install -e './restore[test,gui,app]'
           if [ "$RUNNER_OS" = Linux ]; then xvfb-run -a pytest restore -q; else pytest restore -q; fi
-      - name: Build executables
+      - name: Build executables (direct edition)
         run: python restore/packaging/build.py
       - name: Smoke test command-line executable
         run: python restore/packaging/smoke.py "restore/dist/arcana-restore$([ "$RUNNER_OS" = Windows ] && echo .exe)"
+      - name: Smoke test app window
+        # Opens the real window, waits for the page to reach the back end, closes it.
+        continue-on-error: ${{ runner.os == 'Linux' }}   # WebKitGTK bundling is not yet proven
+        run: |
+          case "$RUNNER_OS" in
+            Windows) restore/dist/Arcalume/Arcalume.exe --smoke ;;
+            macOS)   restore/dist/Arcalume.app/Contents/MacOS/Arcalume --smoke ;;
+            Linux)   xvfb-run -a restore/dist/Arcalume --smoke ;;
+          esac
 
       # ---- Linux: tar.gz with installer script
       - name: Linux package
         if: runner.os == 'Linux'
         run: |
-          d="restore/dist/ArcanaRestore-${VERSION}-linux"
+          d="restore/dist/Arcalume-${VERSION}-linux"
           mkdir -p "$d"
-          cp restore/dist/ArcanaRestore restore/dist/arcana-restore restore/packaging/icons/icon.png restore/packaging/linux/install.sh "$d/"
+          cp restore/dist/Arcalume restore/dist/arcana-restore restore/packaging/icons/icon.png restore/packaging/linux/install.sh "$d/"
           tar -C restore/dist -czf "${d}.tar.gz" "$(basename "$d")"
           rm -rf "$d"
           cp restore/dist/arcana-restore restore/dist/arcana-restore-linux
@@ -67,28 +79,36 @@ jobs:
         shell: pwsh
         run: |
           $st = (Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" | Select-Object -Last 1).FullName
-          foreach ($f in "restore\dist\ArcanaRestore.exe","restore\dist\arcana-restore.exe") {
+          foreach ($f in "restore\dist\Arcalume\Arcalume.exe","restore\dist\arcana-restore.exe") {
             & $st sign /f "$env:RUNNER_TEMP\cert.pfx" /p $env:WIN_CERT_PASSWORD /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 $f }
       - name: Windows installer
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           choco install innosetup -y --no-progress
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "/DAppVersion=$env:VERSION" restore\packaging\windows\arcana-restore.iss
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "/DAppVersion=$env:VERSION" restore\packaging\windows\arcalume.iss
           Copy-Item restore\dist\arcana-restore.exe restore\dist\arcana-restore-windows.exe
       - name: Sign Windows installer
         if: runner.os == 'Windows' && env.WIN_CERT_PFX_BASE64 != ''
         shell: pwsh
         run: |
           $st = (Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" | Select-Object -Last 1).FullName
-          & $st sign /f "$env:RUNNER_TEMP\cert.pfx" /p $env:WIN_CERT_PASSWORD /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 "restore\dist\ArcanaRestore-Setup-$env:VERSION.exe"
+          & $st sign /f "$env:RUNNER_TEMP\cert.pfx" /p $env:WIN_CERT_PASSWORD /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 "restore\dist\Arcalume-Setup-$env:VERSION.exe"
+      - name: Microsoft Store package (store edition, unsigned; the Store signs it)
+        if: runner.os == 'Windows' && vars.MSIX_IDENTITY_NAME != ''
+        env:
+          IDENTITY_NAME: ${{ vars.MSIX_IDENTITY_NAME }}
+          PUBLISHER: ${{ vars.MSIX_PUBLISHER }}
+          PUBLISHER_DISPLAY_NAME: ${{ vars.MSIX_PUBLISHER_DISPLAY_NAME }}
+        run: |
+          python restore/packaging/build.py --edition store --skip-install
+          python restore/packaging/windows/msix/build_msix.py --version "${VERSION}.0"
 
       # ---- macOS: .app in a .dmg (sign + notarize when secrets exist)
       - name: macOS app and dmg
         if: runner.os == 'macOS'
         run: |
           cd restore/dist
-          rm -rf "Arcana Restore.app" && mv ArcanaRestore.app "Arcana Restore.app"
           if [ -n "$APPLE_CERT_P12_BASE64" ]; then
             echo "$APPLE_CERT_P12_BASE64" | base64 -d > "$RUNNER_TEMP/cert.p12"
             security create-keychain -p ci build.keychain
@@ -96,14 +116,14 @@ jobs:
             security unlock-keychain -p ci build.keychain
             security import "$RUNNER_TEMP/cert.p12" -k build.keychain -P "$APPLE_CERT_PASSWORD" -T /usr/bin/codesign
             security set-key-partition-list -S apple-tool:,apple: -s -k ci build.keychain
-            codesign --deep --force --options runtime --timestamp --sign "$APPLE_SIGN_IDENTITY" "Arcana Restore.app"
+            codesign --deep --force --options runtime --timestamp --entitlements ../packaging/macos/entitlements.plist --sign "$APPLE_SIGN_IDENTITY" "Arcalume.app"
           fi
-          mkdir dmgroot && cp -R "Arcana Restore.app" dmgroot/ && ln -s /Applications dmgroot/Applications
-          hdiutil create -volname "Arcana Restore" -srcfolder dmgroot -ov -format UDZO "ArcanaRestore-${VERSION}-macos.dmg"
+          mkdir dmgroot && cp -R "Arcalume.app" dmgroot/ && ln -s /Applications dmgroot/Applications
+          hdiutil create -volname "Arcalume" -srcfolder dmgroot -ov -format UDZO "Arcalume-${VERSION}-macos.dmg"
           rm -rf dmgroot
           if [ -n "$APPLE_CERT_P12_BASE64" ]; then
-            xcrun notarytool submit "ArcanaRestore-${VERSION}-macos.dmg" --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" --password "$APPLE_APP_PASSWORD" --wait
-            xcrun stapler staple "ArcanaRestore-${VERSION}-macos.dmg"
+            xcrun notarytool submit "Arcalume-${VERSION}-macos.dmg" --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" --password "$APPLE_APP_PASSWORD" --wait
+            xcrun stapler staple "Arcalume-${VERSION}-macos.dmg"
           fi
           cp arcana-restore arcana-restore-macos
 
@@ -111,7 +131,7 @@ jobs:
         run: |
           mkdir -p out
           cd restore/dist
-          for f in ArcanaRestore-*.tar.gz ArcanaRestore-Setup-*.exe ArcanaRestore-*-macos.dmg arcana-restore-linux arcana-restore-macos arcana-restore-windows.exe; do
+          for f in Arcalume-*.tar.gz Arcalume-Setup-*.exe Arcalume-*-macos.dmg Arcalume-*-store.msix arcana-restore-linux arcana-restore-macos arcana-restore-windows.exe; do
             [ -f "$f" ] && cp "$f" ../../out/ || true
           done
       - uses: actions/upload-artifact@v4
@@ -134,5 +154,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           cd files && sha256sum * > SHA256SUMS && cat SHA256SUMS
-          gh release create "${GITHUB_REF_NAME}" * --repo "${GITHUB_REPOSITORY}" --title "Arcana Restore ${GITHUB_REF_NAME#restore-v}" \
-            --notes "Installers for Windows, macOS and Linux. Verify downloads against SHA256SUMS. Unsigned builds show an OS warning on first launch."
+          gh release create "${GITHUB_REF_NAME}" * --repo "${GITHUB_REPOSITORY}" --title "Arcalume ${GITHUB_REF_NAME#restore-v}" \
+            --notes "Arcalume installers for Windows, macOS and Linux. Verify downloads against SHA256SUMS. Unsigned builds show an OS warning on first launch. The .msix is for Microsoft Store submission only."

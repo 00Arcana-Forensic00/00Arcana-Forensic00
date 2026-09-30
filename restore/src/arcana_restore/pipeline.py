@@ -73,13 +73,28 @@ def _write_new(path: str, data: bytes) -> None:
 
 def process_file(path: str, vault_dir: str, passphrase: str, ledger: Ledger,
                  cfg: imaging.RepairConfig | None = None, kdf: dict | None = None) -> Result:
-    cfg = cfg or imaging.RepairConfig()
     t0 = time.perf_counter()
-    src_name = os.path.basename(path)
-    src_hash = None
     try:
         original = read_regular_file(path)
-        src_hash = sha256(original)
+    except (imaging.ImageError, OSError) as exc:
+        ledger.append("rejected", {"source_name": os.path.basename(path), "source_sha256": None, "reason": str(exc)})
+        return Result(path, False, None, str(exc), {}, (time.perf_counter() - t0) * 1000)
+    res = process_bytes(os.path.basename(path), original, vault_dir, passphrase, ledger, cfg, kdf)
+    res.source = path
+    res.ms = (time.perf_counter() - t0) * 1000
+    return res
+
+
+def process_bytes(src_name: str, original: bytes, vault_dir: str, passphrase: str, ledger: Ledger,
+                  cfg: imaging.RepairConfig | None = None, kdf: dict | None = None) -> Result:
+    """Seal already-acquired bytes (the app hands over dropped files this way)."""
+    cfg = cfg or imaging.RepairConfig()
+    t0 = time.perf_counter()
+    src_name = os.path.basename(src_name) or "evidence"
+    src_hash = sha256(original)
+    try:
+        if len(original) > imaging.MAX_INPUT_BYTES:
+            raise imaging.ImageError("input exceeds the 100 MiB limit")
         img = imaging.decode_image(original)
         mask, report = imaging.triage(img, cfg)
         restored = imaging.repair(img, mask, cfg, report)
@@ -99,8 +114,10 @@ def process_file(path: str, vault_dir: str, passphrase: str, ledger: Ledger,
             },
             "report": report,
             "reading_order": nodes,
-            "notice": "restored is a derivative; original is byte-identical to the acquired source. "
-                      "mask marks every pixel that may have been synthesized.",
+            "settings": {"flatten": cfg.flatten, "fill_shadow": cfg.fill_shadow, "repair": cfg.repair},
+            "notice": "restored is a derivative: lighting is corrected across the whole page and the "
+                      "pixels marked in mask were synthesized by inpainting (they carry no original data). "
+                      "original is byte-identical to the acquired source.",
         }
         blob = vault.seal(
             {
@@ -123,13 +140,13 @@ def process_file(path: str, vault_dir: str, passphrase: str, ledger: Ledger,
             "status": report["status"],
             "masked_fraction": report["masked_fraction"],
         })
-        return Result(path, True, out, None, report, (time.perf_counter() - t0) * 1000)
+        return Result(src_name, True, out, None, report, (time.perf_counter() - t0) * 1000)
     except FileExistsError:
         err = "a vault for this exact file already exists (refusing to overwrite)"
     except (imaging.ImageError, vault.VaultError, OSError) as exc:
         err = str(exc)
     ledger.append("rejected", {"source_name": src_name, "source_sha256": src_hash, "reason": err})
-    return Result(path, False, None, err, {}, (time.perf_counter() - t0) * 1000)
+    return Result(src_name, False, None, err, {}, (time.perf_counter() - t0) * 1000)
 
 
 SUPPORTED = (".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp")

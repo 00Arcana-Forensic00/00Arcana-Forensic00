@@ -36,3 +36,4 @@ __pycache__/
 restore/build/
 restore/dist/
 restore/*.spec
+license-worker/node_modules/

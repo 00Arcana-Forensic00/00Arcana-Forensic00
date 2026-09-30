@@ -41,7 +41,7 @@ def cmd_process(a) -> int:
     if not files:
         print("no supported image files found", file=sys.stderr)
         return 2
-    cfg = RepairConfig(repair=not a.no_repair)
+    cfg = RepairConfig(repair=not a.no_repair, flatten=not a.no_flatten, fill_shadow=a.fill_shadow)
     results = pipeline.process_batch(files, a.vault, pw, a.workers, cfg)
     for r in results:
         name = os.path.basename(r.source)
@@ -85,6 +85,23 @@ def cmd_verify(a) -> int:
     return 0 if ok else 1
 
 
+def cmd_license(a) -> int:
+    from . import licensing
+    if a.action == "activate":
+        key = open(a.key_file, encoding="ascii").read() if a.key_file else (a.key or "")
+        try:
+            ent = licensing.activate(key)
+        except licensing.LicenseError as exc:
+            print(f"[fail] {exc}", file=sys.stderr)
+            return 2
+        print(f"Pro activated for {ent.licensee or 'this device'}")
+        return 0
+    if a.action == "remove":
+        licensing.deactivate()
+    print(json.dumps(licensing.current().to_dict(), indent=2))
+    return 0
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="arcana-restore", description="Forensic document restoration with sealed vaults.")
     ap.add_argument("--version", action="version", version=__version__)
@@ -95,7 +112,9 @@ def main(argv=None) -> int:
     p.add_argument("-o", "--vault", default="./arcana_vault")
     p.add_argument("-r", "--recursive", action="store_true")
     p.add_argument("--workers", type=int, default=min(4, os.cpu_count() or 1))
-    p.add_argument("--no-repair", action="store_true", help="triage and seal only; do not inpaint")
+    p.add_argument("--no-repair", action="store_true", help="triage and seal only; pixels untouched")
+    p.add_argument("--fill-shadow", action="store_true", help="also fill clipped-black regions (may be redactions)")
+    p.add_argument("--no-flatten", action="store_true", help="do not correct uneven lighting")
     _add_pass(p)
     p.set_defaults(fn=cmd_process)
 
@@ -116,7 +135,16 @@ def main(argv=None) -> int:
     p.add_argument("--expect-head", help="head hash recorded earlier; detects removed trailing entries")
     p.set_defaults(fn=cmd_verify)
 
-    p = sub.add_parser("gui", help="open the desktop window")
+    p = sub.add_parser("license", help="show, activate or remove the Arcalume license on this device")
+    p.add_argument("action", choices=["status", "activate", "remove"])
+    p.add_argument("key", nargs="?", help="license key (or use --key-file)")
+    p.add_argument("--key-file")
+    p.set_defaults(fn=cmd_license)
+
+    p = sub.add_parser("app", help="open the Arcalume app window")
+    p.set_defaults(fn=lambda a: __import__("arcana_restore.app.main", fromlist=["main"]).main())
+
+    p = sub.add_parser("gui", help="open the classic (Tk) window")
     p.set_defaults(fn=lambda a: __import__("arcana_restore.gui", fromlist=["main"]).main())
 
     args = ap.parse_args(argv)

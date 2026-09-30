@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "arcana-restore"
-version = "0.1.0"
+version = "0.2.0"
 description = "Forensic document restoration: glare/shadow repair, reading-order mapping, passphrase-sealed vaults and a hash-chained custody ledger."
 requires-python = ">=3.10"
 license = { text = "Commercial - see LICENSE at repository root" }
@@ -17,18 +17,21 @@ dependencies = [
 [project.optional-dependencies]
 test = ["pytest>=7"]
 gui = ["tkinterdnd2>=0.3"]
+app = ["pywebview>=5.0"]
+ui-test = ["playwright>=1.40"]
 
 [project.scripts]
 arcana-restore = "arcana_restore.cli:main"
 
 [project.gui-scripts]
 arcana-restore-gui = "arcana_restore.gui:main"
+arcalume = "arcana_restore.app.main:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-arcana_restore = ["icon.png"]
+arcana_restore = ["icon.png", "app/web/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

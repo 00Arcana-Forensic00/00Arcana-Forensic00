@@ -1,0 +1,17 @@
+# Source for the existing `arcana-license-worker` (currently a stub in Cloudflare).
+# Deploying this replaces it: `npx wrangler deploy` from this folder, after:
+#   npx wrangler kv namespace create LICENSES        -> paste the id below
+#   npx wrangler secret put STRIPE_WEBHOOK_SECRET    (Stripe Dashboard > Webhooks > signing secret)
+#   npx wrangler secret put LICENSE_SIGNING_KEY      (from restore/packaging/license_tool.py keygen)
+name = "arcana-license-worker"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+
+[[kv_namespaces]]
+binding = "LICENSES"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+[vars]
+SITE_ORIGIN = "https://arcana-forensics.com"
+# Map each Arcalume Payment Link to what it sells. months = null for a lifetime license.
+PAYMENT_LINK_PLANS = '{}'
