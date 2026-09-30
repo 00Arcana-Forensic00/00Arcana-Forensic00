@@ -47,13 +47,15 @@ class PlayProStore(private val context: Context) : ProStore {
         .enablePendingPurchases(PendingPurchasesParams.newBuilder().enableOneTimeProducts().build())
         .build()
 
-    init { connect() }
+    // The launch-time connection is silent: a phone without Google Play (or offline) should not
+    // greet the user with a store error. Failures are reported when they tap buy or restore.
+    init { connect(quiet = true) }
 
-    private fun connect(then: (() -> Unit)? = null) {
+    private fun connect(quiet: Boolean = false, then: (() -> Unit)? = null) {
         if (client.isReady) { then?.invoke(); return }
         client.startConnection(object : BillingClientStateListener {
             override fun onBillingSetupFinished(result: BillingResult) {
-                if (result.responseCode != BillingClient.BillingResponseCode.OK) { report(result); return }
+                if (result.responseCode != BillingClient.BillingResponseCode.OK) { if (!quiet) report(result); return }
                 queryDetails()
                 restore()
                 then?.invoke()
