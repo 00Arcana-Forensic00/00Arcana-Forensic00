@@ -8,7 +8,7 @@ import os
 import re
 import stat
 import time
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
@@ -149,11 +149,20 @@ def collect(paths: list[str], recursive: bool = False) -> list[str]:
 
 
 def process_batch(files: list[str], vault_dir: str, passphrase: str, workers: int = 4,
-                  cfg: imaging.RepairConfig | None = None, kdf: dict | None = None) -> list[Result]:
+                  cfg: imaging.RepairConfig | None = None, kdf: dict | None = None,
+                  on_result=None) -> list[Result]:
+    """Process files in parallel. ``on_result(result)`` is called as each one finishes."""
     os.makedirs(vault_dir, mode=0o700, exist_ok=True)
     ledger = Ledger(os.path.join(vault_dir, LEDGER_NAME))
+    results: list[Result | None] = [None] * len(files)
     with ThreadPoolExecutor(max_workers=max(1, workers)) as pool:
-        return list(pool.map(lambda f: process_file(f, vault_dir, passphrase, ledger, cfg, kdf), files))
+        futures = {pool.submit(process_file, f, vault_dir, passphrase, ledger, cfg, kdf): i for i, f in enumerate(files)}
+        for fut in as_completed(futures):
+            res = fut.result()
+            results[futures[fut]] = res
+            if on_result:
+                on_result(res)
+    return results  # type: ignore[return-value]
 
 
 def extract(vault_path: str, passphrase: str, out_dir: str, only: tuple[str, ...] = ("original", "restored", "mask", "manifest"),
