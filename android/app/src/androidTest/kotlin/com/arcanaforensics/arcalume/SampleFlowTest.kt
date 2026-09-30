@@ -46,14 +46,21 @@ class SampleFlowTest {
         rule.onRoot().tryPerformAccessibilityChecks()
     }
 
-    /** Waits for [text]; on timeout, fails listing every text on screen (an error message, a stuck progress label). */
+    /**
+     * Waits for [text]. On timeout, fails listing every text that appeared while waiting,
+     * so a brief error snackbar or a stuck progress label shows up in the report.
+     */
     private fun awaitText(text: String, timeoutMs: Long = 180_000) {
+        val seen = linkedSetOf<String>()
         try {
-            rule.waitUntil(timeoutMs) { rule.onAllNodes(hasText(text)).fetchSemanticsNodes().isNotEmpty() }
+            rule.waitUntil(timeoutMs) {
+                rule.onAllNodes(SemanticsMatcher("any node") { true }, useUnmergedTree = true).fetchSemanticsNodes()
+                    .flatMap { n -> n.config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text } }
+                    .forEach { seen += it }
+                rule.onAllNodes(hasText(text)).fetchSemanticsNodes().isNotEmpty()
+            }
         } catch (e: ComposeTimeoutException) {
-            val seen = rule.onAllNodes(SemanticsMatcher("any node") { true }, useUnmergedTree = true).fetchSemanticsNodes()
-                .flatMap { n -> n.config.getOrNull(SemanticsProperties.Text).orEmpty().map { it.text } }
-            throw AssertionError("\"$text\" did not appear within ${timeoutMs / 1000} s. On screen: $seen", e)
+            throw AssertionError("\"$text\" did not appear within ${timeoutMs / 1000} s. Seen while waiting: $seen", e)
         }
     }
 }

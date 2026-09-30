@@ -3,6 +3,7 @@ package com.arcanaforensics.arcalume.ui
 import android.app.Application
 import android.net.Uri
 import android.provider.OpenableColumns
+import android.util.Log
 import androidx.annotation.StringRes
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -115,6 +116,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             val page = withContext(Dispatchers.Default) { Processor.process(name, source, bytes, RepairConfig()) }
             state.update { it.copy(pages = it.pages + page, currentId = page.id, tab = Tab.RECOVER) }
         } catch (e: Exception) {
+            Log.w("Arcalume", "recovery failed", e)   // local logcat only; carries no file name
             say(str(R.string.read_failed, name, e.message ?: e.javaClass.simpleName))
         }
     }
