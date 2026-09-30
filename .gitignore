@@ -28,3 +28,5 @@ __pycache__/
 
 # Local archives
 *.zip
+*.egg-info/
+.pytest_cache/

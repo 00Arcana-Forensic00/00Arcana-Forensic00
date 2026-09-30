@@ -22,6 +22,12 @@ releases**. Download and verification instructions: **[arcana-forensics.com/try]
 - [ARCN2 Vault Format Specification](docs/ARCN2-SPEC.md) — open format, independently implementable
 - [Custody Anchoring](docs/ANCHORING.md) — Merkle manifests, OpenTimestamps bridge, RFC 3161 option
 
+## Document reconstruction (Python)
+[`recon/`](recon/README.md) repairs lighting-damaged document photos (shadow
+flattening, glare handling), maps multi-column reading order, and seals the
+result in ARCN v1 vault blobs readable by `arcana-vault`. Its README lists
+what is implemented and what is still aspirational.
+
 ## Trust model
 Open format and KDF parameters. Closed implementation. See [SECURITY.md](SECURITY.md)
 for the product boundary and [docs/FIELD_TEST.md](docs/FIELD_TEST.md) for the automated
