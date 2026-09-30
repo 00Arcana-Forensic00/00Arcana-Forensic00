@@ -35,9 +35,19 @@ pip install -e './restore[test]' && pytest restore
 ```
 Tests cover round trips, tamper/truncation/forged-header rejection, wrong passphrase, fresh-process extraction, ledger edits and concurrency, hostile inputs and repair behavior.
 
-## Standalone executable
+## Desktop app and installers
+Double-click app with a window (Seal evidence / Open vault / Verify ledger), drag-and-drop for images, and an app icon:
 ```bash
-restore/packaging/build.sh          # builds restore/dist/arcana-restore (+ SHA256SUMS) for this OS
+arcana-restore gui                      # from a Python install
+python restore/packaging/build.py       # builds dist/ArcanaRestore (app) + dist/arcana-restore (CLI) for this OS
 python restore/packaging/smoke.py restore/dist/arcana-restore
 ```
-The `restore-build` workflow (manual run, or a `restore-v*` tag) builds Linux, Windows and macOS executables and smoke-tests each one. PyInstaller output is OS-specific, so build on the target OS. Linux is verified; Windows and macOS builds have not been run yet, and the ledger file lock is POSIX-only (on Windows, concurrent *processes* are not serialized; threads are). Binaries are unsigned: code-sign and notarize before distributing to customers, and publish the SHA256SUMS.
+Installers come from the `restore-release` workflow (manual run, or push a `restore-vX.Y.Z` tag to publish a GitHub Release with checksums):
+
+| OS | Download | What the user does |
+|---|---|---|
+| Windows | `ArcanaRestore-Setup-X.exe` | double-click; Start menu entry and optional desktop shortcut; per-user, no admin prompt |
+| macOS | `ArcanaRestore-X-macos.dmg` | drag "Arcana Restore" to Applications |
+| Linux | `ArcanaRestore-X-linux.tar.gz` | extract, run `./install.sh --desktop` |
+
+**Status:** Linux is built and tested here (CLI smoke test, installer script, window launch, automated widget tests under Xvfb). The Windows installer, macOS dmg, and the signing/notarization steps are written but have not been run: run the workflow once before shipping. Builds are unsigned unless these repository secrets exist: `WIN_CERT_PFX_BASE64`, `WIN_CERT_PASSWORD` (Windows) and `APPLE_CERT_P12_BASE64`, `APPLE_CERT_PASSWORD`, `APPLE_SIGN_IDENTITY`, `APPLE_ID`, `APPLE_TEAM_ID`, `APPLE_APP_PASSWORD` (macOS). Unsigned installers trigger SmartScreen/Gatekeeper warnings. The app icon is a placeholder (`packaging/icons/icon.png`): replace it and run `python packaging/make_icons.py --from-png`. The ledger file lock is POSIX-only (Windows serializes threads, not separate processes).

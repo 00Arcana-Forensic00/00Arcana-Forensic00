@@ -116,6 +116,9 @@ def main(argv=None) -> int:
     p.add_argument("--expect-head", help="head hash recorded earlier; detects removed trailing entries")
     p.set_defaults(fn=cmd_verify)
 
+    p = sub.add_parser("gui", help="open the desktop window")
+    p.set_defaults(fn=lambda a: __import__("arcana_restore.gui", fromlist=["main"]).main())
+
     args = ap.parse_args(argv)
     try:
         return args.fn(args)

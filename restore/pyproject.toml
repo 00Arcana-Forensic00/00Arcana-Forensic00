@@ -16,12 +16,19 @@ dependencies = [
 
 [project.optional-dependencies]
 test = ["pytest>=7"]
+gui = ["tkinterdnd2>=0.3"]
 
 [project.scripts]
 arcana-restore = "arcana_restore.cli:main"
 
+[project.gui-scripts]
+arcana-restore-gui = "arcana_restore.gui:main"
+
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+arcana_restore = ["icon.png"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
