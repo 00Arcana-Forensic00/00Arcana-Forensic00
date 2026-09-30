@@ -22,6 +22,11 @@ class MainActivity : ComponentActivity() {
         setContent { ArcalumeTheme { ArcalumeRoot(vm) } }
     }
 
+    override fun onResume() {
+        super.onResume()
+        (application as ArcalumeApp).pro.tick()
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         handle(intent)

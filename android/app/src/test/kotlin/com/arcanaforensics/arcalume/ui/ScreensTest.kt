@@ -78,12 +78,24 @@ class ScreensTest {
     @Test fun planShowsPurchaseOnlyWhereItIsSold() {
         rule.setContent {
             ArcalumeTheme {
-                PlanScreen(Entitlements.FREE, "US$9.99", sellsInApp = true, acceptsKeys = false,
+                PlanScreen(Entitlements.FREE, "US$5.99", sellsInApp = true, acceptsKeys = false,
                     actions = PlanActions({}, {}, { null }, {}, {}))
             }
         }
-        rule.onNodeWithText("Unlock Pro, US$9.99").assertHasClickAction()
+        rule.onNodeWithText("Unlock Pro, US$5.99").assertHasClickAction()
         rule.onNodeWithText("License key").assertDoesNotExist()
+    }
+
+    @Test fun planShowsTheFreeOfferAndStillSellsPro() {
+        rule.setContent {
+            ArcalumeTheme {
+                PlanScreen(Entitlements.pro(Entitlements.Source.TRIAL, expires = "2027-03-29"), "US$5.99", sellsInApp = true, acceptsKeys = false,
+                    actions = PlanActions({}, {}, { null }, {}, {}), trialDaysLeft = 180)
+            }
+        }
+        rule.onNodeWithText("Pro, free for 180 more days (until 2027-03-29)").assertExists()
+        rule.onNodeWithText("Every new install gets Pro free for 180 days", substring = true).assertExists()
+        rule.onNodeWithText("Unlock Pro, US$5.99").assertHasClickAction()
     }
 
     @Test fun planAcceptsKeysInTheDirectBuild() {

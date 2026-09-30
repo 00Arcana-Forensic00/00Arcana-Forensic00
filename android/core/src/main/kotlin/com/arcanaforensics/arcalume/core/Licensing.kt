@@ -78,7 +78,7 @@ object Licensing {
 
 data class Entitlements(val plan: Plan, val source: Source, val licensee: String = "", val expires: String? = null) {
     enum class Plan { FREE, PRO }
-    enum class Source { NONE, KEY, PLAY }
+    enum class Source { NONE, KEY, PLAY, TRIAL }
 
     val cleanExport get() = plan == Plan.PRO
     val seal get() = plan == Plan.PRO

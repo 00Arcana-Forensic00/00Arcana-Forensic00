@@ -9,7 +9,7 @@ Character limits are Play Console's.
 `Revive glare- and shadow-damaged pages, prove every change, seal the original.` (78)
 
 **Category:** Productivity. **Tags:** Document scanner, PDF & document tools.
-**Contains ads:** No. **In-app purchases:** Yes (one-time Pro unlock).
+**Contains ads:** No. **In-app purchases:** Yes (one-time Pro unlock, US$5.99).
 
 ## Full description (4000)
 
@@ -44,8 +44,9 @@ BUILT FOR EVERYONE
 
 FREE AND PRO
 Free: recovery, comparison, the filled-pixel map, and opening and checking any vault.
-Pro, one payment: clean saved copies, sealing into vaults with a custody log, and sealing a
-whole session at once. No subscription.
+Pro: clean saved copies, sealing into vaults with a custody log, and sealing a whole session
+at once. Every new install gets Pro free for 180 days. After that, keep it with one payment of
+US$5.99. No subscription, no account, and vaults you sealed can always be opened and checked.
 
 WHAT IT CAN'T DO
 Text inside a blown-out glare spot is gone from that photo; retake it at an angle. The custody

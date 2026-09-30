@@ -18,7 +18,7 @@ owner can take, in order.
 1. Create app: name *Arcalume: Document Forensics*, default language English (US), App, Free,
    and accept the declarations.
 2. Monetize > Products > In-app products: create **`arcalume_pro`** (this exact id is in
-   `Brand.PRO_PRODUCT_ID`), one-time, and set the price. Decision needed: see below.
+   `Brand.PRO_PRODUCT_ID`), one-time, priced at **US$5.99** (David's decision, 2026-09-30).
 3. Monetization setup > Licensing: copy the **base64 RSA public key** into
    `Brand.PLAY_LICENSE_KEY` so purchases are signature-checked on the device.
 4. Fill Data safety, content rating, target audience and privacy policy from `DATA_SAFETY.md`,
@@ -43,8 +43,10 @@ track first, then closed testing, then production.
 
 ## Decisions only the owner can make
 
-- **Price of Pro.** Suggested: a one-time US$9.99. The benchmark found most competitors sell
-  subscriptions (Adobe Scan about US$9.99 a month); TurboScan Pro sells for US$5.99 one-time.
+- **180 days free (decided).** Every new install gets Pro free for 180 days, counted on the
+  device from first launch (`core/Trial.kt`). It needs no Play free-trial setup, because Play
+  trials exist only for subscriptions. Reinstalling or clearing app data restarts the count;
+  closing that gap would need an account or server, which conflicts with local-only processing.
 - **Organization or personal developer account** (affects the 12-tester rule and the seller name shown).
 - **Direct (sideload) build:** whether to also offer the `direct` APK from the website with
   license keys. Keys need `Brand.LICENSE_PUBLIC_KEYS` filled from the same keygen as the desktop app.

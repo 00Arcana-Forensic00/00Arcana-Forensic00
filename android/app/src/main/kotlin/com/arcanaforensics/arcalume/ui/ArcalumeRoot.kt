@@ -58,6 +58,7 @@ fun ArcalumeRoot(vm: AppViewModel) {
     val ui by vm.ui.collectAsStateWithLifecycle()
     val ent by vm.pro.entitlements.collectAsStateWithLifecycle()
     val price by vm.pro.price.collectAsStateWithLifecycle()
+    val trial by vm.pro.trial.collectAsStateWithLifecycle()
     val proNotice by vm.pro.notice.collectAsStateWithLifecycle()
     val message by vm.message.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -158,7 +159,7 @@ fun ArcalumeRoot(vm: AppViewModel) {
                     if (page == null) EmptyState(recoverActions) else ReviewScreen(ui.pages, page, ent.cleanExport, recoverActions)
                 }
                 Tab.VAULT -> VaultScreen(ui, vaultActions)
-                Tab.PLAN -> PlanScreen(ent, price, vm.pro.sellsInApp, vm.pro.acceptsKeys, planActions)
+                Tab.PLAN -> PlanScreen(ent, price, vm.pro.sellsInApp, vm.pro.acceptsKeys, planActions, trialDaysLeft = trial.daysLeft())
             }
             ui.busy?.let { BusyOverlay(it) }
         }

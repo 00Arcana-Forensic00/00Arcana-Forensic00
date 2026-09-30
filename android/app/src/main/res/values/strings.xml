@@ -175,6 +175,11 @@
     <string name="pro_seal">Sealing into encrypted vaults with a custody log</string>
     <string name="pro_batch">Sealing every page in a session at once</string>
     <string name="pro_once">One payment. No subscription, no account.</string>
+    <plurals name="plan_trial">
+        <item quantity="one">Pro, free for %1$d more day (until %2$s)</item>
+        <item quantity="other">Pro, free for %1$d more days (until %2$s)</item>
+    </plurals>
+    <string name="trial_after">Every new install gets Pro free for 180 days. After that, keep it with one payment. Vaults you sealed stay yours: opening and checking them is always free.</string>
     <string name="buy">Unlock Pro, %1$s</string>
     <string name="buy_unpriced">Unlock Pro</string>
     <string name="restore_purchase">Restore purchase</string>
