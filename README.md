@@ -25,6 +25,12 @@ releases: **[arcana-forensics.com/try](https://arcana-forensics.com/try)**
   (OpenTimestamps or RFC 3161). Until then, record the final ledger hash outside the case.
 - Known gap: `verify` does not yet cross-check the ledger against `manifest.json`.
 
+## Document reconstruction (Python)
+[`recon/`](recon/README.md) repairs lighting-damaged document photos (shadow
+flattening, glare handling), maps multi-column reading order, and seals the
+result in ARCN v1 vault blobs readable by `arcana-vault`. Its README lists
+what is implemented and what is still aspirational.
+
 ## Trust model
 Community Edition source is MIT (see [LICENSE](LICENSE) and [NOTICE](NOTICE)). See [SECURITY.md](SECURITY.md)
 for the product boundary and [docs/FIELD_TEST.md](docs/FIELD_TEST.md) for the automated
