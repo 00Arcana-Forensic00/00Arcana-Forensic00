@@ -52,11 +52,21 @@ def test_ledger_records_and_verifies(evidence, tmp_path):
     assert entry["data"]["vault_sha256"] == pipeline.sha256(open(r.vault_path, "rb").read())
 
 
-def test_refuses_to_overwrite_existing_vault(evidence, tmp_path):
+def test_same_file_sealed_twice_makes_two_independent_vaults(evidence, tmp_path):
     vd, (r,) = run(evidence, tmp_path)
     (r2,) = pipeline.process_batch([str(evidence)], vd, "another long passphrase", 1, kdf=FAST_KDF)
-    assert not r2.ok and "already exists" in r2.error
-    assert pipeline.extract(r.vault_path, PW, str(tmp_path / "o"))  # first vault intact
+    assert r.ok and r2.ok and r.vault_path != r2.vault_path          # nothing is ever overwritten
+    assert pipeline.extract(r.vault_path, PW, str(tmp_path / "o1"))
+    assert pipeline.extract(r2.vault_path, "another long passphrase", str(tmp_path / "o2"))
+    with pytest.raises(vault.AuthError):
+        pipeline.extract(r.vault_path, "another long passphrase", str(tmp_path / "o3"))
+
+
+def test_existing_vault_path_is_never_replaced(tmp_path):
+    p = tmp_path / "v.arcr"; p.write_bytes(b"precious")
+    with pytest.raises(FileExistsError):
+        pipeline._write_new(str(p), b"new")
+    assert p.read_bytes() == b"precious"
 
 
 def test_rejects_symlink_nonimage_and_logs_it(tmp_path):
@@ -109,3 +119,34 @@ def test_extract_refuses_symlinked_vault_and_symlinked_output(evidence, tmp_path
     with pytest.raises(Exception):
         pipeline.extract(r.vault_path, PW, str(out), force=True)
     assert target.read_text() == "keep me"
+
+
+def test_source_name_not_in_vault_filename_or_ledger(evidence, tmp_path):
+    vd, (r,) = run(evidence, tmp_path)
+    assert "receipt" not in os.path.basename(r.vault_path)
+    assert b"receipt" not in open(os.path.join(vd, pipeline.LEDGER_NAME), "rb").read()
+    assert b"receipt" not in open(r.vault_path, "rb").read()          # only inside the encrypted manifest
+    out = pipeline.extract(r.vault_path, PW, str(tmp_path / "o"))
+    assert any("receipt.original" in p for p in out)                  # ...and restored on extraction
+
+
+def test_seal_works_on_filesystems_without_hard_links(evidence, tmp_path, monkeypatch):
+    def no_link(*a, **k):
+        raise OSError(95, "Operation not supported")
+    monkeypatch.setattr(os, "link", no_link)
+    vd, (r,) = run(evidence, tmp_path)
+    assert r.ok
+    p = tmp_path / "v.arcr"; p.write_bytes(b"precious")
+    with pytest.raises(FileExistsError):
+        pipeline._write_new(str(p), b"new")                          # fallback path still never overwrites
+    assert p.read_bytes() == b"precious"
+    assert pipeline.extract(r.vault_path, PW, str(tmp_path / "o"))
+
+
+def test_extract_writes_nothing_if_any_destination_exists(evidence, tmp_path):
+    vd, (r,) = run(evidence, tmp_path)
+    out = tmp_path / "o"; out.mkdir()
+    (out / "receipt.mask.png").write_bytes(b"mine")
+    with pytest.raises(FileExistsError):
+        pipeline.extract(r.vault_path, PW, str(out))
+    assert sorted(os.listdir(out)) == ["receipt.mask.png"]            # no partial output
