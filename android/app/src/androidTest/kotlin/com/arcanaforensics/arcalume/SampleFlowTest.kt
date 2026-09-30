@@ -39,7 +39,7 @@ class SampleFlowTest {
         rule.onNodeWithText("Show reading order").performScrollTo().performClick()
         rule.onRoot().tryPerformAccessibilityChecks()
         rule.onNodeWithText("Plan").performClick()   // a new install is inside the 180-day free Pro offer
-        rule.onNodeWithText("Pro, free for 180 more days", substring = true).assertExists()
+        rule.onNodeWithText("Pro, free for 180 more days", substring = true, useUnmergedTree = true).assertExists()
         rule.onRoot().tryPerformAccessibilityChecks()
         rule.onNodeWithText("Vault").performClick()
         rule.onNodeWithText("Check the log").performScrollTo().performClick()
