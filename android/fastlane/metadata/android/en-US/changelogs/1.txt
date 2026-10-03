@@ -1,0 +1,5 @@
+First release of Arcalume.
+• Repairs glare, shadow and uneven light in photos of documents, and marks every pixel it had to fill.
+• Seals the original and the recovered copy into an encrypted vault, recorded in a custody log you can check.
+• No internet access, no account, no ads.
+• Every new install gets Pro free for 180 days.

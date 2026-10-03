@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Microsoft Store package for the store edition. build_msix.py fills the ${...} values.
+     IDENTITY_NAME, PUBLISHER and PUBLISHER_DISPLAY_NAME must be copied exactly from
+     Partner Center > Product identity once the app name is reserved. -->
+<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+         xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+         xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+         IgnorableNamespaces="uap rescap">
+  <Identity Name="${IDENTITY_NAME}" Publisher="${PUBLISHER}" Version="${VERSION}" ProcessorArchitecture="x64"/>
+  <Properties>
+    <DisplayName>Arcalume</DisplayName>
+    <PublisherDisplayName>${PUBLISHER_DISPLAY_NAME}</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.26100.0"/>
+  </Dependencies>
+  <Resources>
+    <Resource Language="en-us"/>
+  </Resources>
+  <Applications>
+    <Application Id="Arcalume" Executable="Arcalume\Arcalume.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements DisplayName="Arcalume" Description="Recover documents damaged by glare and shadow, on your device."
+                          BackgroundColor="transparent" Square150x150Logo="Assets\Square150x150Logo.png"
+                          Square44x44Logo="Assets\Square44x44Logo.png">
+        <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png"/>
+        <uap:SplashScreen Image="Assets\SplashScreen.png"/>
+      </uap:VisualElements>
+      <Extensions>
+        <uap:Extension Category="windows.fileTypeAssociation">
+          <uap:FileTypeAssociation Name="arcalumevault">
+            <uap:DisplayName>Arcalume sealed file</uap:DisplayName>
+            <uap:SupportedFileTypes><uap:FileType>.arcr</uap:FileType></uap:SupportedFileTypes>
+          </uap:FileTypeAssociation>
+        </uap:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+  <!-- runFullTrust is required for a desktop (Win32) app. No internetClient capability is declared. -->
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust"/>
+  </Capabilities>
+</Package>

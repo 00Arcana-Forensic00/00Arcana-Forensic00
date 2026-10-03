@@ -1,0 +1,96 @@
+name: android
+on:
+  push:
+    paths: ["android/**", "restore/src/**", "restore/tests/test_android_interop.py", ".github/workflows/android.yml"]
+  pull_request:
+    paths: ["android/**", "restore/src/**", "restore/tests/test_android_interop.py", ".github/workflows/android.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  core:
+    name: Core (engine, vault, ledger, licensing) and desktop interop
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "21" }
+      - uses: gradle/actions/setup-gradle@v4
+      - name: JUnit against the desktop engine's fixtures
+        working-directory: android
+        env:
+          ARCALUME_INTEROP_OUT: ${{ runner.temp }}/interop
+        run: ./gradlew -p core test --no-daemon
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: pip install -e './restore[test]'
+      - name: Desktop opens the vault and log the Android core sealed
+        env:
+          ARCALUME_INTEROP_OUT: ${{ runner.temp }}/interop
+        run: pytest restore/tests/test_android_interop.py -q -rs
+
+  app:
+    name: App (unit tests, lint, builds, no-network check)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "21" }
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Unit and screen tests
+        working-directory: android
+        run: ./gradlew :app:testPlayDebugUnitTest :app:testDirectDebugUnitTest --no-daemon
+      - name: Lint
+        working-directory: android
+        run: ./gradlew :app:lintPlayDebug --no-daemon
+      - name: Build
+        working-directory: android
+        run: ./gradlew :app:assemblePlayDebug :app:assembleDirectDebug :app:bundlePlayRelease --no-daemon
+      - name: The packaged app must not request network access
+        run: |
+          aapt2=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)aapt2
+          for apk in android/app/build/outputs/apk/*/debug/*.apk; do
+            echo "== $apk"
+            "$aapt2" dump permissions "$apk" | tee perms.txt
+            if grep -Eq "android.permission.(INTERNET|ACCESS_NETWORK_STATE|ACCESS_WIFI_STATE)" perms.txt; then
+              echo "::error file=android/app/src/main/AndroidManifest.xml::$apk requests network access"; exit 1
+            fi
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: arcalume-android
+          path: |
+            android/app/build/outputs/apk/**/*.apk
+            android/app/build/outputs/bundle/**/*.aab
+            android/app/build/reports/**
+          if-no-files-found: ignore
+
+  device:
+    name: On an emulator (real OpenCV, accessibility checks)
+    runs-on: ubuntu-latest
+    needs: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "21" }
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: cd android && ./gradlew :app:connectedPlayDebugAndroidTest --no-daemon || { adb logcat -d | grep -E 'Arcalume|AndroidRuntime|OpenCV|TestRunner|FATAL' | tail -300; exit 1; }
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: device-test-reports
+          path: android/app/build/reports/androidTests/**

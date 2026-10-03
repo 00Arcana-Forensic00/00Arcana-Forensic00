@@ -105,6 +105,7 @@ def _restore_video(original: bytes, cfg: imaging.RepairConfig):
     if not cfg.repair:  # triage-and-seal only: keep the sharpest frame untouched
         best = max(frames, key=video._sharpness)
         mask, report = imaging.triage(best, cfg)
+        report.pop("_glare_mask", None)  # internal to repair(), which this path skips; not JSON
         report.update({"source_kind": "video", "frames_sampled": len(frames), "frames_used": 1})
         report["status"] = "detected_not_repaired" if mask.any() else "stable"
         return best, mask, report
@@ -112,20 +113,38 @@ def _restore_video(original: bytes, cfg: imaging.RepairConfig):
     mask2, report = imaging.triage(comp, cfg)
     restored = imaging.repair(comp, mask2, cfg, report)       # inpaint only what frames could not fix
     report.update(vreport)
-    if vreport.get("composite_replaced_fraction", 0) > 0 and report["status"] == "stable":
+    # Frames replaced glare pixels with real captured data, so the page was repaired even if
+    # the single-image step only had lighting left to fix ("enhanced") or nothing ("stable").
+    if vreport.get("composite_replaced_fraction", 0) > 0 and report["status"] in ("stable", "enhanced"):
         report["status"] = "repaired"
     return restored, cv2.bitwise_or(vmask, mask2), report
 
 
 def process_file(path: str, vault_dir: str, passphrase: str, ledger: Ledger,
                  cfg: imaging.RepairConfig | None = None, kdf: dict | None = None) -> Result:
-    cfg = cfg or imaging.RepairConfig()
     t0 = time.perf_counter()
-    src_name = os.path.basename(path)
-    src_hash = None
     try:
         original = read_regular_file(path)
-        src_hash = sha256(original)
+    except (imaging.ImageError, OSError) as exc:
+        ledger.append("rejected", {"source_sha256": None, "reason": str(exc)})
+        return Result(path, False, None, str(exc), {}, (time.perf_counter() - t0) * 1000)
+    res = process_bytes(os.path.basename(path), original, vault_dir, passphrase, ledger, cfg, kdf)
+    res.source = path
+    res.ms = (time.perf_counter() - t0) * 1000
+    return res
+
+
+def process_bytes(src_name: str, original: bytes, vault_dir: str, passphrase: str, ledger: Ledger,
+                  cfg: imaging.RepairConfig | None = None, kdf: dict | None = None) -> Result:
+    """Seal already-acquired bytes (the app hands over dropped files this way)."""
+    cfg = cfg or imaging.RepairConfig()
+    t0 = time.perf_counter()
+    src_name = os.path.basename(src_name) or "evidence"
+    src_hash = sha256(original)
+    try:
+        # No flat size check here: video.read_frames enforces its own 250 MiB cap and
+        # imaging.decode_image enforces its own 100 MiB cap (MAX_INPUT_BYTES) — a blanket
+        # 100 MiB check here would wrongly reject a valid 100-250 MiB video.
         if video.video_kind(original):
             restored, mask, report = _restore_video(original, cfg)
         else:
@@ -148,8 +167,10 @@ def process_file(path: str, vault_dir: str, passphrase: str, ledger: Ledger,
             },
             "report": report,
             "reading_order": nodes,
-            "notice": "restored is a derivative; original is byte-identical to the acquired source. "
-                      "mask marks every pixel that may have been synthesized.",
+            "settings": {"flatten": cfg.flatten, "fill_shadow": cfg.fill_shadow, "repair": cfg.repair},
+            "notice": "restored is a derivative: lighting is corrected across the whole page and the "
+                      "pixels marked in mask were synthesized by inpainting (they carry no original data). "
+                      "original is byte-identical to the acquired source.",
         }
         blob = vault.seal(
             {
@@ -171,13 +192,13 @@ def process_file(path: str, vault_dir: str, passphrase: str, ledger: Ledger,
             "status": report["status"],
             "masked_fraction": report["masked_fraction"],
         })
-        return Result(path, True, out, None, report, (time.perf_counter() - t0) * 1000)
+        return Result(src_name, True, out, None, report, (time.perf_counter() - t0) * 1000)
     except FileExistsError:
         err = "a vault for this exact file already exists (refusing to overwrite)"
     except (imaging.ImageError, vault.VaultError, OSError) as exc:
         err = str(exc)
     ledger.append("rejected", {"source_sha256": src_hash, "reason": err})
-    return Result(path, False, None, err, {}, (time.perf_counter() - t0) * 1000)
+    return Result(src_name, False, None, err, {}, (time.perf_counter() - t0) * 1000)
 
 
 SUPPORTED = (".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp") + video.VIDEO_EXTS
