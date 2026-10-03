@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Merchant Center overview</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600&family=DM+Sans:wght@400;500;600&display=swap">
+<style>
+body{margin:0;font-family:'DM Sans',sans-serif;background:#F6F3EC;color:#1B1F1D}
+a{color:#1F6F5C}a:hover{color:#14493c}
+</style>
+</helmet>
+<div style="width: 1280px; height: 860px; box-sizing: border-box; display: flex; background: #F6F3EC; font-family: 'DM Sans', sans-serif; color: #1B1F1D">
+<div style="width: 232px; flex-shrink: 0; box-sizing: border-box; padding: 28px 20px; background: #1B1F1D; color: #F6F3EC; display: flex; flex-direction: column; gap: 32px">
+<div style="font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600">[Store name]</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<a href="Main.dc.html" style="display: block; padding: 12px 14px; border-radius: 8px; background: {{accent}}; color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 600">Overview</a>
+<a href="Main.dc.html" style="display: block; padding: 12px 14px; border-radius: 8px; color: #D9D5C9; text-decoration: none; font-size: 15px">Products</a>
+<a href="Main.dc.html" style="display: block; padding: 12px 14px; border-radius: 8px; color: #D9D5C9; text-decoration: none; font-size: 15px">Feeds</a>
+<a href="Reviews.dc.html" style="display: block; padding: 12px 14px; border-radius: 8px; color: #D9D5C9; text-decoration: none; font-size: 15px">Reviews</a>
+<a href="Main.dc.html" style="display: block; padding: 12px 14px; border-radius: 8px; color: #D9D5C9; text-decoration: none; font-size: 15px">Settings</a>
+</div>
+</div>
+<div style="flex-grow: 1; box-sizing: border-box; padding: 36px 44px; display: flex; flex-direction: column; gap: 28px">
+<div style="display: flex; justify-content: space-between; align-items: flex-end">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="font-size: 14px; color: #5A615D">Google Merchant Center · [Merchant ID]</div>
+<h1 style="margin: 0; font-family: 'Fraunces', serif; font-size: 40px; font-weight: 500">Overview</h1>
+</div>
+<a href="Reviews.dc.html" style="display: block; padding: 14px 22px; border-radius: 8px; background: {{accent}}; color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 600">Open reviews</a>
+</div>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px">
+<sc-for list="{{kpis}}" as="k" hint-placeholder-count="4">
+<div style="padding: 22px; background: #ffffff; border: 1px solid #DDD8CA; border-radius: 12px; display: flex; flex-direction: column; gap: 10px">
+<div style="font-size: 14px; color: #5A615D">{{k.label}}</div>
+<div style="font-family: 'Fraunces', serif; font-size: 36px; font-weight: 500">{{k.value}}</div>
+</div>
+</sc-for>
+</div>
+<div style="display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 20px; flex-grow: 1">
+<div style="background: #ffffff; border: 1px solid #DDD8CA; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 14px">
+<div style="font-size: 18px; font-weight: 600">Product status</div>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="5">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 0; border-top: 1px solid #ECE8DC">
+<div style="display: flex; flex-direction: column; gap: 3px">
+<div style="font-size: 16px; font-weight: 500">{{r.name}}</div>
+<div style="font-size: 13px; color: #5A615D">{{r.issue}}</div>
+</div>
+<div style="padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; background: {{r.bg}}; color: {{r.fg}}">{{r.status}}</div>
+</div>
+</sc-for>
+</div>
+<div style="background: #ffffff; border: 1px solid #DDD8CA; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 14px">
+<div style="font-size: 18px; font-weight: 600">Needs attention</div>
+<sc-for list="{{todos}}" as="t" hint-placeholder-count="3">
+<div style="padding: 14px; border-radius: 8px; background: #FBF3E4; display: flex; flex-direction: column; gap: 4px">
+<div style="font-size: 15px; font-weight: 600; color: #7A3E06">{{t.title}}</div>
+<div style="font-size: 13px; color: #5A615D">{{t.body}}</div>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#1F6F5C"},"$preview":{"width":1280,"height":860}}'>
+class Component extends DCLogic {
+renderVals() {
+const ok = { status: 'Approved', bg: '#DFF0EA', fg: '#14493C' };
+const warn = { status: 'Limited', bg: '#FBE9CC', fg: '#7A3E06' };
+const bad = { status: 'Disapproved', bg: '#F8DAD3', fg: '#8A2410' };
+return {
+kpis: [
+{ label: 'Approved products', value: '[000]' },
+{ label: 'Limited', value: '[00]' },
+{ label: 'Disapproved', value: '[00]' },
+{ label: 'Average rating', value: '[0.0]' }
+],
+rows: [
+{ name: '[Product name 1]', issue: 'No issues', ...ok },
+{ name: '[Product name 2]', issue: 'Missing GTIN', ...warn },
+{ name: '[Product name 3]', issue: 'Price mismatch with landing page', ...bad },
+{ name: '[Product name 4]', issue: 'No issues', ...ok },
+{ name: '[Product name 5]', issue: 'Image too small', ...warn }
+],
+todos: [
+{ title: 'Fix price mismatches', body: '[00] products need a matching price.' },
+{ title: 'Add product identifiers', body: '[00] products are missing GTINs.' },
+{ title: 'Connect review feed', body: 'Show star ratings on your listings.' }
+],
+accent: this.props.accent ?? '#1F6F5C'
+};
+}
+}
+</script>
+</body>
+</html>
