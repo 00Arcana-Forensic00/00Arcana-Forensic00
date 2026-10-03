@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Arcalume</string>
+    <!-- Home-screen label; the beta build overrides it so both can sit side by side. -->
+    <string name="launcher_name">Arcalume</string>
+    <string name="app_subtitle">Document forensics</string>
+    <string name="share_target">Recover with Arcalume</string>
+
+    <!-- navigation -->
+    <string name="tab_recover">Recover</string>
+    <string name="tab_vault">Vault</string>
+    <string name="tab_plan">Plan</string>
+
+    <!-- empty state -->
+    <string name="empty_title">Recover a damaged page</string>
+    <string name="empty_body">Take or choose a photo of a page ruined by glare, shadow or poor light. Arcalume evens out the lighting, restores faded text, marks every pixel it had to fill, and keeps the untouched original.</string>
+    <string name="take_photo">Take photo</string>
+    <string name="choose_photos">Choose photos</string>
+    <string name="choose_files">Choose files</string>
+    <string name="try_sample">Try a sample page</string>
+    <string name="privacy_line">Everything stays on this phone. Arcalume has no internet access, no account and no tracking.</string>
+
+    <!-- camera -->
+    <string name="camera_title">Photograph the page</string>
+    <string name="camera_hint">Hold the phone flat over the page with the whole page in view. If you see a bright spot, tilt the phone a little and take another photo.</string>
+    <string name="shutter">Take photo</string>
+    <string name="close_camera">Close camera</string>
+    <string name="camera_denied">Camera access is off, so photos can\'t be taken here. You can still choose photos you already have.</string>
+    <string name="open_settings">Open settings</string>
+    <string name="camera_failed">The photo could not be taken: %1$s</string>
+    <string name="camera_unavailable">No camera is available on this device.</string>
+
+    <!-- work in progress -->
+    <string name="working_reading">Reading %1$s…</string>
+    <string name="working_recovering">Recovering %1$s…</string>
+    <string name="working_sealing">Sealing into the vault… this takes a few seconds on purpose.</string>
+    <string name="working_opening">Checking the passphrase…</string>
+    <string name="working_verifying">Checking the custody log…</string>
+
+    <!-- review -->
+    <string name="pages_heading">Pages in this session</string>
+    <string name="add_page">Add page</string>
+    <string name="page_chip">%1$s, %2$s</string>
+    <string name="view_original">Original</string>
+    <string name="view_compare">Compare</string>
+    <string name="view_recovered">Recovered</string>
+    <string name="view_mode">View</string>
+    <string name="viewer_desc">Page viewer: %1$s</string>
+    <string name="split_label">Comparison position</string>
+    <string name="split_state">%1$d%% original, %2$d%% recovered</string>
+    <string name="action_show_original">Show original</string>
+    <string name="action_show_recovered">Show recovered</string>
+    <string name="action_compare">Compare side by side</string>
+    <string name="zoom_in">Zoom in</string>
+    <string name="zoom_out">Zoom out</string>
+    <string name="zoom_fit">Fit page</string>
+    <string name="zoom_state">Zoom %1$d%%</string>
+    <string name="show_filled">Show filled areas</string>
+    <string name="show_filled_legend">Hatched magenta marks pixels Arcalume had to fill. They carry no original data.</string>
+    <string name="show_order">Show reading order</string>
+    <string name="show_order_legend">Numbered boxes show the order text blocks will be read in, column by column.</string>
+    <string name="findings_heading">What Arcalume found and did</string>
+    <string name="level_ok">Done</string>
+    <string name="level_info">Note</string>
+    <string name="level_warn">Caution</string>
+    <string name="finding_item">%1$s: %2$s</string>
+    <string name="order_heading">Text blocks in reading order (%1$d)</string>
+    <string name="order_item">Block %1$d of %2$d, %3$s, %4$d by %5$d pixels</string>
+    <string name="where_top_left">top left</string>
+    <string name="where_top_right">top right</string>
+    <string name="where_bottom_left">bottom left</string>
+    <string name="where_bottom_right">bottom right</string>
+    <string name="where_top">top, full width</string>
+    <string name="where_middle">middle, full width</string>
+    <string name="where_bottom">bottom, full width</string>
+    <string name="settings_heading">Recovery settings</string>
+    <string name="set_flatten">Even out lighting</string>
+    <string name="set_flatten_help">Divides out shadows and uneven light so dimmed text comes back.</string>
+    <string name="set_fill_shadow">Fill solid black areas</string>
+    <string name="set_fill_shadow_help">Only for shadows. Black areas are often redactions or photos, and filling them hides that.</string>
+    <string name="set_repair">Repair pixels</string>
+    <string name="set_repair_help">Turn off to only report damage and leave every pixel untouched.</string>
+    <string name="details_heading">Technical report</string>
+    <string name="detail_original_hash">Original SHA-256</string>
+    <string name="detail_size">Original size</string>
+    <string name="detail_processed">Recovered at</string>
+    <string name="detail_status">Status</string>
+    <string name="detail_filled">Filled</string>
+    <string name="detail_source">Source</string>
+    <string name="source_camera">Taken with this phone\'s camera in Arcalume</string>
+    <string name="source_import">Imported; history before import is unknown</string>
+    <string name="source_sample">Built-in sample page</string>
+    <string name="save_copy">Save recovered copy</string>
+    <string name="save_copy_free_note">The free plan adds a watermark to saved copies.</string>
+    <string name="seal">Seal as evidence</string>
+    <string name="seal_all">Seal all %1$d pages</string>
+    <string name="remove_page">Remove from session</string>
+    <string name="saved_copy">Recovered copy saved.</string>
+    <string name="saved_copy_watermarked">Recovered copy saved with a watermark. Pro saves clean copies.</string>
+    <string name="save_failed">Could not save: %1$s</string>
+    <string name="read_failed">Could not open %1$s: %2$s</string>
+    <string name="too_large">%1$s is larger than 100 MB.</string>
+
+    <!-- seal dialog -->
+    <string name="seal_title">Seal as evidence</string>
+    <string name="seal_body">The original photo, the recovered copy, the map of filled pixels and a report are encrypted together into one vault file, and the sealing is recorded in the custody log.</string>
+    <string name="passphrase">Passphrase</string>
+    <string name="passphrase_confirm">Repeat passphrase</string>
+    <string name="passphrase_help">At least %1$d characters. A short sentence works well.</string>
+    <string name="passphrase_short">Use at least %1$d characters.</string>
+    <string name="passphrase_mismatch">The passphrases don\'t match.</string>
+    <string name="show_passphrase">Show passphrase</string>
+    <string name="hide_passphrase">Hide passphrase</string>
+    <string name="seal_ack">I understand that a forgotten passphrase cannot be recovered by anyone, including Arcana Forensics.</string>
+    <string name="seal_ack_needed">Tick the box to confirm you understand.</string>
+    <string name="cancel">Cancel</string>
+    <string name="seal_go">Seal</string>
+    <string name="sealed_title">Sealed</string>
+    <string name="sealed_body">%1$s is in the vault. The custody log now ends with this fingerprint:</string>
+    <string name="sealed_keep">Keep a copy somewhere else, such as your case notes. If entries are ever removed from the end of the log, this fingerprint will no longer match.</string>
+    <string name="copy_fingerprint">Copy fingerprint</string>
+    <string name="copied">Copied.</string>
+    <string name="export_vault">Export vault file</string>
+    <string name="done">Done</string>
+
+    <!-- vault tab -->
+    <string name="vault_heading">Sealed on this phone</string>
+    <string name="vault_empty">Nothing sealed yet. Recover a page, then choose Seal as evidence.</string>
+    <string name="vault_item">%1$s, sealed %2$s, %3$s</string>
+    <string name="open">Open</string>
+    <string name="export">Export</string>
+    <string name="delete">Delete</string>
+    <string name="delete_title">Delete this vault?</string>
+    <string name="delete_body">%1$s will be removed from this phone. Exported copies are not affected. The deletion is recorded in the custody log.</string>
+    <string name="deleted">Vault deleted and the deletion recorded.</string>
+    <string name="exported">Exported.</string>
+    <string name="log_heading">Custody log</string>
+    <string name="log_body">Every sealing is chained to the one before it with SHA-256. Editing, reordering or removing an entry breaks the chain.</string>
+    <string name="log_verify">Check the log</string>
+    <string name="log_expected">Fingerprint you saved (optional)</string>
+    <string name="log_ok">Chain intact: %1$d entries.</string>
+    <string name="log_ok_known">Chain intact: %1$d entries, ending at the last fingerprint this phone recorded.</string>
+    <string name="log_ok_expected">Chain intact: %1$d entries, and it ends at the fingerprint you entered.</string>
+    <string name="log_bad">Problem: %1$s.</string>
+    <string name="log_head">Current fingerprint</string>
+    <string name="log_export">Export log</string>
+    <string name="log_empty">The log is empty.</string>
+    <string name="log_entry">Entry %1$d, %2$s, %3$s. %4$s Fingerprint ends %5$s.</string>
+    <string name="event_evidence_sealed">sealed</string>
+    <string name="event_rejected">rejected</string>
+    <string name="event_vault_deleted">vault deleted</string>
+    <string name="open_file_heading">Open a vault file</string>
+    <string name="open_file_body">Open a vault sealed on this phone, another phone, or the Arcalume desktop app. Opening and checking vaults is always free.</string>
+    <string name="open_file">Choose vault file</string>
+    <string name="open_title">Open vault</string>
+    <string name="open_go">Open</string>
+    <string name="open_wrong">That passphrase doesn\'t open this vault, or the file was changed.</string>
+    <string name="opened_title">Vault contents</string>
+    <string name="opened_intact">All %1$d parts match the fingerprints recorded when it was sealed.</string>
+    <string name="opened_source">Source: %1$s</string>
+    <string name="opened_created">Sealed: %1$s by %2$s</string>
+    <string name="opened_status">Result: %1$s</string>
+    <string name="save_original">Save original</string>
+    <string name="save_recovered">Save recovered</string>
+    <string name="save_mask">Save filled-pixel map</string>
+    <string name="save_manifest">Save report (JSON)</string>
+
+    <!-- plan -->
+    <string name="plan_heading">Your plan</string>
+    <string name="plan_free">Free</string>
+    <string name="plan_pro">Pro</string>
+    <string name="plan_pro_from_play">Pro, bought on Google Play. Thank you.</string>
+    <string name="plan_pro_licensed">Pro, licensed to %1$s</string>
+    <string name="free_includes">Free includes recovery, comparison, the filled-pixel map, and opening and checking any vault.</string>
+    <string name="pro_adds">Pro adds</string>
+    <string name="pro_clean">Clean saved copies, without the watermark</string>
+    <string name="pro_seal">Sealing into encrypted vaults with a custody log</string>
+    <string name="pro_batch">Sealing every page in a session at once</string>
+    <string name="pro_once">One payment. No subscription, no account.</string>
+    <plurals name="plan_trial">
+        <item quantity="one">Pro, free for %1$d more day (until %2$s)</item>
+        <item quantity="other">Pro, free for %1$d more days (until %2$s)</item>
+    </plurals>
+    <string name="trial_after">Every new install gets Pro free for 180 days. After that, keep it with one payment. Vaults you sealed stay yours: opening and checking them is always free.</string>
+    <string name="buy">Unlock Pro, %1$s</string>
+    <string name="buy_unpriced">Unlock Pro</string>
+    <string name="restore_purchase">Restore purchase</string>
+    <string name="billing_unavailable">Google Play purchases aren\'t available right now: %1$s</string>
+    <string name="purchase_pending">Your payment is pending. Pro unlocks when Google Play confirms it.</string>
+    <string name="license_key">License key</string>
+    <string name="activate">Activate</string>
+    <string name="remove_key">Remove key</string>
+    <string name="license_ok">Pro is active. Thank you.</string>
+    <string name="upgrade_title">This is a Pro feature</string>
+    <string name="upgrade_body">Sealing pages into encrypted evidence vaults with a custody log is part of Pro.</string>
+    <string name="see_plans">See plans</string>
+    <string name="not_now">Not now</string>
+    <string name="about_heading">About</string>
+    <string name="about_version">Arcalume %1$s for Android</string>
+    <string name="about_privacy">Arcalume does not request internet access. Photos, vaults and the custody log are stored only in this app\'s private storage and are excluded from cloud backups. Nothing leaves the phone unless you export it.</string>
+    <string name="limits_heading">What Arcalume can\'t do</string>
+    <string name="limit_1">Text inside a blown-out glare spot is gone from the photo. Arcalume fills that area smoothly and marks it; it never invents characters. Retake the photo at an angle instead.</string>
+    <string name="limit_2">The custody log proves that records were not changed after sealing. It can\'t prove what happened to a photo before it reached Arcalume, and it is not a certification that evidence is admissible.</string>
+    <string name="limit_3">Reading order is geometry: it finds columns and blocks. It does not read or understand the text.</string>
+    <string name="support">Help and support</string>
+    <string name="privacy_policy">Privacy policy</string>
+    <string name="terms_of_use">Terms of use</string>
+    <string name="licenses">Open-source licenses</string>
+    <string name="licenses_body">Arcalume uses OpenCV (Apache License 2.0), Bouncy Castle (MIT License), and Android Jetpack libraries (Apache License 2.0).</string>
+    <string name="state_expanded">Expanded</string>
+    <string name="state_collapsed">Collapsed</string>
+    <string name="status_stable">nothing to repair</string>
+    <string name="status_enhanced">lighting corrected</string>
+    <string name="status_repaired">repaired</string>
+    <string name="status_detected">damage reported, not changed</string>
+    <string name="status_skipped">too damaged, not changed</string>
+</resources>

@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- No network: the window can load nothing but its own inlined code and data: images. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self'; base-uri 'none'; form-action 'none'">
+<title>Arcalume</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to main content</a>
+
+<header class="top" role="banner">
+  <div class="brand">
+    <svg class="mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+      <circle cx="16" cy="16" r="13" fill="none" stroke="currentColor" stroke-width="2"/>
+      <path d="M16 5 L25 25 H7 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+      <circle cx="16" cy="18" r="3" fill="currentColor"/>
+    </svg>
+    <div>
+      <h1 id="app-name">Arcalume</h1>
+      <p class="tagline" id="tagline"></p>
+    </div>
+  </div>
+  <div class="top-actions">
+    <div class="textsize" role="group" aria-label="Text size">
+      <button type="button" class="icon-btn" id="text-smaller" aria-label="Smaller text">A&minus;</button>
+      <button type="button" class="icon-btn" id="text-larger" aria-label="Larger text">A+</button>
+    </div>
+    <button type="button" class="icon-btn" id="help-btn" aria-haspopup="dialog">Shortcuts</button>
+    <button type="button" class="plan" id="plan-btn" aria-describedby="plan-desc"><span id="plan-label">Free</span></button>
+    <span id="plan-desc" class="sr-only">Opens the License section</span>
+  </div>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="Sections">
+  <button role="tab" id="tab-recover" aria-controls="panel-recover" aria-selected="true">Recover</button>
+  <button role="tab" id="tab-vaults" aria-controls="panel-vaults" aria-selected="false" tabindex="-1">Vaults</button>
+  <button role="tab" id="tab-license" aria-controls="panel-license" aria-selected="false" tabindex="-1">License</button>
+</nav>
+
+<main id="main" tabindex="-1">
+
+<!-- ================= Recover ================= -->
+<section id="panel-recover" role="tabpanel" aria-labelledby="tab-recover">
+
+  <div id="empty" class="empty">
+    <div id="drop" class="drop" aria-describedby="drop-hint">
+      <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false" class="drop-icon">
+        <rect x="9" y="5" width="30" height="38" rx="3" fill="none" stroke="currentColor" stroke-width="2.5"/>
+        <path d="M15 15h18M15 21h18M15 27h12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+        <circle cx="33" cy="33" r="7" fill="none" stroke="currentColor" stroke-width="2.5"/>
+      </svg>
+      <h2>Recover a document</h2>
+      <p id="drop-hint">Drop photos or scans anywhere in this window, or choose them. PNG, JPEG, TIFF or BMP.</p>
+      <div class="drop-actions">
+        <button type="button" class="btn primary" id="choose-btn">Choose photos&hellip;</button>
+        <button type="button" class="btn" id="sample-btn">Try a sample page</button>
+      </div>
+    </div>
+    <ul class="promises" aria-label="How your files are handled">
+      <li><strong>Stays on this device.</strong> No account, no uploads, no tracking.</li>
+      <li><strong>Honest results.</strong> Every pixel we had to fill in is marked, never passed off as original.</li>
+      <li><strong>Provable.</strong> Seal the untouched original with the result, and check later that nothing changed.</li>
+    </ul>
+  </div>
+
+  <div id="workspace" class="workspace" hidden>
+    <aside class="pages" aria-labelledby="pages-h">
+      <div class="pages-head">
+        <h2 id="pages-h">Pages</h2>
+        <button type="button" class="btn small" id="add-btn">Add&hellip;</button>
+      </div>
+      <ul id="page-list" role="listbox" aria-labelledby="pages-h" tabindex="0"></ul>
+      <p class="muted small">Tip: drop more files anywhere in this window.</p>
+    </aside>
+
+    <section class="viewer" aria-labelledby="viewer-h">
+      <h2 id="viewer-h" class="sr-only">Page preview</h2>
+      <div class="viewer-bar">
+        <fieldset class="seg" id="view-mode">
+          <legend class="sr-only">Show</legend>
+          <label><input type="radio" name="mode" value="before"><span>Before</span></label>
+          <label><input type="radio" name="mode" value="split" checked><span>Compare</span></label>
+          <label><input type="radio" name="mode" value="after"><span>After</span></label>
+        </fieldset>
+        <label class="switch"><input type="checkbox" id="show-mask"><span>Show filled areas</span></label>
+        <label class="switch"><input type="checkbox" id="show-order"><span>Show reading order</span></label>
+        <label class="zoom">Zoom
+          <select id="zoom">
+            <option value="fit" selected>Fit</option>
+            <option value="1">100%</option>
+            <option value="1.5">150%</option>
+            <option value="2">200%</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="stage-wrap" id="stage-wrap" tabindex="0" role="region" aria-label="Page preview. When zoomed in, use the arrow keys to scroll.">
+        <div class="stage" id="stage" aria-busy="false">
+          <img id="img-after" alt="">
+          <img id="img-before" alt="">
+          <svg id="order-layer" aria-hidden="true" focusable="false"></svg>
+          <div class="divider" id="divider" aria-hidden="true"><span></span></div>
+          <div class="working" id="working" hidden><span class="spinner" aria-hidden="true"></span><span>Recovering&hellip;</span></div>
+        </div>
+      </div>
+      <div class="split-control" id="split-control">
+        <label for="split">Compare position</label>
+        <input type="range" id="split" min="0" max="100" value="50" aria-valuetext="50% before, 50% after">
+      </div>
+      <p class="legend" id="mask-legend" hidden>
+        <span class="swatch" aria-hidden="true"></span>
+        Hatched magenta marks pixels that were filled in. They hold no original information.
+      </p>
+    </section>
+
+    <aside class="side" aria-labelledby="findings-h">
+      <h2 id="findings-h">What we found</h2>
+      <ul id="findings" class="findings"></ul>
+
+      <h2 class="mt">Options</h2>
+      <label class="check"><input type="checkbox" id="opt-flatten" checked>
+        <span>Even out shadows and lighting<small>Recommended. Brings back text that is dim but still there.</small></span></label>
+      <label class="check"><input type="checkbox" id="opt-fill-shadow">
+        <span>Fill solid black areas<small>Only for shadows. Black areas are often redactions or photos.</small></span></label>
+
+      <div class="actions">
+        <button type="button" class="btn primary" id="save-btn">Save restored copy&hellip;</button>
+        <button type="button" class="btn" id="seal-btn" aria-describedby="seal-desc">Seal to vault&hellip; <span class="pro-tag" id="seal-pro">Pro</span></button>
+        <p id="seal-desc" class="muted small">Encrypts the untouched original, the result and the fill map together, and records it in a tamper-evident log.</p>
+        <p id="free-note" class="muted small" hidden>Free saves carry a watermark. <a href="#" id="upgrade-link">Get Pro</a></p>
+      </div>
+
+      <details class="report">
+        <summary>Technical report</summary>
+        <dl id="tech-summary"></dl>
+        <pre id="report-json" tabindex="0" aria-label="Full technical report, JSON"></pre>
+      </details>
+    </aside>
+  </div>
+</section>
+
+<!-- ================= Vaults ================= -->
+<section id="panel-vaults" role="tabpanel" aria-labelledby="tab-vaults" hidden>
+  <div class="cards">
+    <form class="card" id="open-form" novalidate>
+      <h2>Open a sealed file</h2>
+      <p class="muted">Always free. Restores the original, the recovered page, the fill map and the manifest, and checks each against its recorded fingerprint.</p>
+      <div class="field">
+        <label for="ov-file">Sealed file (.arcr)</label>
+        <div class="with-btn"><input id="ov-file" type="text" autocomplete="off" spellcheck="false"><button type="button" class="btn" id="ov-file-btn">Browse&hellip;</button></div>
+      </div>
+      <div class="field">
+        <label for="ov-pass">Passphrase</label>
+        <div class="with-btn"><input id="ov-pass" type="password" autocomplete="off"><button type="button" class="btn reveal-pass" aria-pressed="false" aria-controls="ov-pass">Show</button></div>
+      </div>
+      <div class="field">
+        <label for="ov-out">Save the files to</label>
+        <div class="with-btn"><input id="ov-out" type="text" autocomplete="off" spellcheck="false"><button type="button" class="btn" id="ov-out-btn">Browse&hellip;</button></div>
+      </div>
+      <button type="submit" class="btn primary">Open</button>
+      <div class="result" id="ov-result" role="status" aria-live="polite"></div>
+    </form>
+
+    <form class="card" id="ledger-form" novalidate>
+      <h2>Check a custody log</h2>
+      <p class="muted">Always free. Confirms no entry in a vault folder's log was edited, reordered or removed.</p>
+      <div class="field">
+        <label for="lg-dir">Vault folder</label>
+        <div class="with-btn"><input id="lg-dir" type="text" autocomplete="off" spellcheck="false"><button type="button" class="btn" id="lg-dir-btn">Browse&hellip;</button></div>
+      </div>
+      <div class="field">
+        <label for="lg-head">Fingerprint you saved when sealing <span class="muted">(optional)</span></label>
+        <input id="lg-head" type="text" autocomplete="off" spellcheck="false" aria-describedby="lg-head-hint">
+        <p id="lg-head-hint" class="muted small">With it, the check also catches removed final entries.</p>
+      </div>
+      <button type="submit" class="btn primary">Check</button>
+      <div class="result" id="lg-result" role="status" aria-live="polite"></div>
+    </form>
+  </div>
+</section>
+
+<!-- ================= License ================= -->
+<section id="panel-license" role="tabpanel" aria-labelledby="tab-license" hidden>
+  <div class="cards">
+    <div class="card">
+      <h2>Your plan</h2>
+      <p id="lic-status" class="lic-status"></p>
+      <form id="lic-form" novalidate>
+        <div class="field">
+          <label for="lic-key">License key</label>
+          <textarea id="lic-key" rows="4" spellcheck="false" autocomplete="off" aria-describedby="lic-hint"></textarea>
+          <p id="lic-hint" class="muted small">Paste the key from your receipt. It is checked on this device; nothing is sent anywhere.</p>
+        </div>
+        <div class="row">
+          <button type="submit" class="btn primary">Activate</button>
+          <button type="button" class="btn" id="lic-remove" hidden>Remove key</button>
+          <a class="btn" id="buy-link" href="#" target="_blank" rel="noopener">Buy Pro</a>
+        </div>
+        <div class="result" id="lic-result" role="status" aria-live="polite"></div>
+      </form>
+    </div>
+    <div class="card">
+      <h2>Free and Pro</h2>
+      <table class="compare">
+        <caption class="sr-only">What each plan includes</caption>
+        <thead><tr><th scope="col">Feature</th><th scope="col">Free</th><th scope="col">Pro</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Recover and compare pages</th><td>Yes</td><td>Yes</td></tr>
+          <tr><th scope="row">See exactly what was filled in</th><td>Yes</td><td>Yes</td></tr>
+          <tr><th scope="row">Open sealed files, check logs</th><td>Yes</td><td>Yes</td></tr>
+          <tr><th scope="row">Save restored copies</th><td>With watermark</td><td>Clean</td></tr>
+          <tr><th scope="row">Seal to encrypted vault with custody log</th><td>No</td><td>Yes</td></tr>
+          <tr><th scope="row">Several pages at once</th><td>No</td><td>Yes</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+</main>
+
+<!-- ================= Dialogs ================= -->
+<dialog id="seal-dialog" aria-labelledby="seal-h">
+  <form id="seal-form" method="dialog" novalidate>
+    <h2 id="seal-h">Seal to vault</h2>
+    <p class="muted" id="seal-what"></p>
+    <div class="field">
+      <label for="sd-dir">Vault folder</label>
+      <div class="with-btn"><input id="sd-dir" type="text" autocomplete="off" spellcheck="false"><button type="button" class="btn" id="sd-dir-btn">Browse&hellip;</button></div>
+    </div>
+    <div class="field">
+      <label for="sd-pass">Passphrase</label>
+      <div class="with-btn"><input id="sd-pass" type="password" autocomplete="new-password" aria-describedby="sd-pass-hint sd-strength"><button type="button" class="btn reveal-pass" aria-pressed="false" aria-controls="sd-pass">Show</button></div>
+      <p id="sd-pass-hint" class="muted small"></p>
+      <meter id="sd-meter" min="0" max="4" low="2" high="3" optimum="4" value="0" aria-hidden="true"></meter>
+      <p id="sd-strength" class="small" aria-live="polite"></p>
+    </div>
+    <div class="field">
+      <label for="sd-pass2">Type it again</label>
+      <input id="sd-pass2" type="password" autocomplete="new-password">
+    </div>
+    <label class="check"><input type="checkbox" id="sd-ack"><span>I understand that nobody, including Arcana, can recover a lost passphrase.</span></label>
+    <p class="error" id="sd-error" role="alert"></p>
+    <div class="row end">
+      <button type="button" class="btn" id="sd-cancel">Cancel</button>
+      <button type="submit" class="btn primary" id="sd-go">Seal</button>
+    </div>
+  </form>
+  <div id="seal-done" hidden>
+    <h2 tabindex="-1" id="seal-done-h">Sealed</h2>
+    <p id="seal-done-text"></p>
+    <div class="field">
+      <label for="sd-head">Custody log fingerprint</label>
+      <div class="with-btn"><input id="sd-head" type="text" readonly><button type="button" class="btn" id="sd-copy">Copy</button></div>
+      <p class="muted small">Keep a copy somewhere else (an email to yourself works). Checking the log against it later proves no entries were removed.</p>
+    </div>
+    <div class="row end">
+      <button type="button" class="btn" id="sd-show">Show folder</button>
+      <button type="button" class="btn primary" id="sd-close">Done</button>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="upgrade-dialog" aria-labelledby="up-h">
+  <h2 id="up-h">This is part of Pro</h2>
+  <p id="up-text"></p>
+  <div class="row end">
+    <button type="button" class="btn" id="up-close">Not now</button>
+    <button type="button" class="btn primary" id="up-go">See Pro</button>
+  </div>
+</dialog>
+
+<dialog id="help-dialog" aria-labelledby="help-h">
+  <h2 id="help-h">Keyboard shortcuts</h2>
+  <table class="keys">
+    <caption class="sr-only">Shortcut keys</caption>
+    <tbody>
+      <tr><th scope="row"><kbd>Ctrl</kbd>/<kbd>&#8984;</kbd> + <kbd>O</kbd></th><td>Choose photos</td></tr>
+      <tr><th scope="row"><kbd>Ctrl</kbd>/<kbd>&#8984;</kbd> + <kbd>S</kbd></th><td>Save restored copy</td></tr>
+      <tr><th scope="row"><kbd>Ctrl</kbd>/<kbd>&#8984;</kbd> + <kbd>E</kbd></th><td>Seal to vault</td></tr>
+      <tr><th scope="row"><kbd>Alt</kbd> + <kbd>1</kbd> / <kbd>2</kbd> / <kbd>3</kbd></th><td>Before, Compare, After</td></tr>
+      <tr><th scope="row"><kbd>Alt</kbd> + <kbd>M</kbd></th><td>Show filled areas</td></tr>
+      <tr><th scope="row"><kbd>Ctrl</kbd>/<kbd>&#8984;</kbd> + <kbd>+</kbd> / <kbd>&minus;</kbd></th><td>Larger or smaller text</td></tr>
+      <tr><th scope="row">Arrow keys</th><td>Move the compare slider, or move through pages and tabs</td></tr>
+    </tbody>
+  </table>
+  <div class="row end"><button type="button" class="btn primary" id="help-close">Close</button></div>
+</dialog>
+
+<div id="toast" class="toast" aria-hidden="true"></div>
+<div id="live" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+<div id="alert" class="sr-only" role="alert" aria-atomic="true"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
