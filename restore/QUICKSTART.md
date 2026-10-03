@@ -8,7 +8,7 @@ Repair glare and shadow damage in photographed documents, then seal the result i
 |---|---|
 | **Windows** | Double-click `ArcanaRestore-Setup-<version>.exe`. If Windows SmartScreen warns, click **More info**, then **Run anyway**. Tick "Create a desktop shortcut" if you want one. |
 | **Mac** | Open `ArcanaRestore-<version>-macos.dmg` and drag **Arcana Restore** to **Applications**. If macOS blocks it, right-click the app, choose **Open**, then confirm. |
-| **Linux** | Extract `ArcanaRestore-<version>-linux.tar.gz`, open a terminal in that folder and run `./install.sh --desktop`. |
+| **Linux** | Extract `ArcanaRestore-<version>-linux.tar.gz`, open a terminal in that folder and run `./install.sh`. It adds an app-menu entry and a Desktop icon; double-click the icon to launch (if it asks, right-click it and choose Allow Launching). |
 
 Check the download against `SHA256SUMS` from the same release page if you want to confirm it is unmodified.
 

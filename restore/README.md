@@ -98,6 +98,9 @@ Installers come from the `restore-release` workflow (manual run, or push a `rest
 
 | OS | Download | What the user does |
 |---|---|---|
+| Windows | `ArcanaRestore-Setup-X.exe` | double-click; Start menu entry and optional desktop shortcut; per-user, no admin prompt |
+| macOS | `ArcanaRestore-X-macos.dmg` | drag "Arcana Restore" to Applications |
+| Linux | `ArcanaRestore-X-linux.tar.gz` | extract, run `./install.sh` |
 | Windows | `Arcalume-Setup-X.exe` | double-click; Start menu entry and optional desktop shortcut; per-user, no admin prompt |
 | macOS | `Arcalume-X-macos.dmg` | drag "Arcalume" to Applications |
 | Linux | `Arcalume-X-linux.tar.gz` | extract, run `./install.sh --desktop` |
