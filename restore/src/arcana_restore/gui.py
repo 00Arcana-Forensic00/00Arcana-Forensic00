@@ -43,7 +43,7 @@ def check_passphrase(pw: str, confirm: str | None = None) -> str | None:
 def seal_files(paths, vault_dir, passphrase, repair=True, on_result=None, kdf=None, workers=None):
     files = pipeline.collect(list(paths))
     if not files:
-        raise ValueError("No supported image files (PNG, JPEG, TIFF, BMP) were selected.")
+        raise ValueError("No supported files selected. Use photos or screenshots (PNG, JPEG, TIFF, BMP) or short videos (MP4, MOV, AVI, WebM, MKV).")
     return pipeline.process_batch(files, vault_dir, passphrase, workers or min(4, os.cpu_count() or 1),
                                   RepairConfig(repair=repair), kdf, on_result)
 
@@ -190,7 +190,7 @@ class App:
     def _build_seal(self):
         t = self.seal_tab
         t.columnconfigure(0, weight=1)
-        ttk.Label(t, text="1. Add images (or drop them here)").grid(sticky="w", columnspan=2)
+        ttk.Label(t, text="1. Add photos, screenshots or short videos (or drop them here)").grid(sticky="w", columnspan=2)
         box = ttk.Frame(t)
         box.grid(sticky="nsew", columnspan=2, pady=(4, 0))
         box.columnconfigure(0, weight=1)
@@ -231,8 +231,8 @@ class App:
                 have.add(p)
 
     def _add_files(self):
-        self._add_paths(filedialog.askopenfilenames(title="Choose images",
-                        filetypes=[("Images", "*.png *.jpg *.jpeg *.tif *.tiff *.bmp"), ("All files", "*.*")]))
+        self._add_paths(filedialog.askopenfilenames(title="Choose photos or videos",
+                        filetypes=[("Photos and videos", "*.png *.jpg *.jpeg *.tif *.tiff *.bmp *.mp4 *.m4v *.mov *.avi *.webm *.mkv"), ("All files", "*.*")]))
 
     def _add_folder(self):
         d = filedialog.askdirectory(title="Choose a folder of images")

@@ -9,6 +9,7 @@
 | `pipeline.py` | File acquisition (symlink/size/type checks), atomic no-overwrite writes, extraction and integrity checks |
 | `ledger.py` | SHA-256 hash-chained custody log, locking, verification |
 | `imaging.py` | Decoding of untrusted images, resource limits, repair and reading-order heuristics |
+| `video.py` | Decoding of untrusted video (temp copy, limits), frame alignment and glare compositing |
 | `cli.py`, `gui.py` | Passphrase handling, user-facing flows |
 | `.github/workflows/restore-release.yml`, `packaging/` | Build, signing and release pipeline |
 
@@ -22,7 +23,7 @@ Out of scope: the Rust `arcana-acquire` crates (separate format `ARCN` v1) and t
 ## Questions we want answered
 1. Is the container format sound (nonce/key uniqueness, AAD coverage, header parsing, downgrade or parameter-substitution attacks)?
 2. Are the Argon2id parameters and the 12-character minimum passphrase adequate for the intended threat model?
-3. Can a crafted image or vault cause memory exhaustion, crashes or code execution (decoders, limits, JSON handling)?
+3. Can a crafted image, video or vault cause memory exhaustion, crashes or code execution (decoders, limits, JSON handling)?
 4. Do path handling, symlink/junction checks and output naming hold on Windows, macOS and Linux, including race conditions?
 5. Are the ledger's integrity claims accurately stated? Should a keyed MAC or external timestamp anchoring be mandatory?
 6. Are the release workflow, secret handling and dependency pinning adequate? Is reproducible build feasible?

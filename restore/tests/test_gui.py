@@ -27,7 +27,7 @@ def test_seal_open_verify_logic(evidence, tmp_path):
 
 def test_no_images_is_a_clear_error(tmp_path):
     (tmp_path / "x.txt").write_text("hi")
-    with pytest.raises(ValueError, match="No supported image"):
+    with pytest.raises(ValueError, match="No supported files"):
         gui.seal_files([str(tmp_path)], str(tmp_path / "v"), PW)
 
 
