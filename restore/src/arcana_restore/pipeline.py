@@ -105,6 +105,7 @@ def _restore_video(original: bytes, cfg: imaging.RepairConfig):
     if not cfg.repair:  # triage-and-seal only: keep the sharpest frame untouched
         best = max(frames, key=video._sharpness)
         mask, report = imaging.triage(best, cfg)
+        report.pop("_glare_mask", None)  # internal to repair(), which this path skips; not JSON
         report.update({"source_kind": "video", "frames_sampled": len(frames), "frames_used": 1})
         report["status"] = "detected_not_repaired" if mask.any() else "stable"
         return best, mask, report
@@ -112,7 +113,9 @@ def _restore_video(original: bytes, cfg: imaging.RepairConfig):
     mask2, report = imaging.triage(comp, cfg)
     restored = imaging.repair(comp, mask2, cfg, report)       # inpaint only what frames could not fix
     report.update(vreport)
-    if vreport.get("composite_replaced_fraction", 0) > 0 and report["status"] == "stable":
+    # Frames replaced glare pixels with real captured data, so the page was repaired even if
+    # the single-image step only had lighting left to fix ("enhanced") or nothing ("stable").
+    if vreport.get("composite_replaced_fraction", 0) > 0 and report["status"] in ("stable", "enhanced"):
         report["status"] = "repaired"
     return restored, cv2.bitwise_or(vmask, mask2), report
 
