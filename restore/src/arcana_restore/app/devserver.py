@@ -24,6 +24,9 @@ TYPES = {".html": "text/html; charset=utf-8", ".css": "text/css", ".js": "text/j
 
 def make_server(api: Api, port: int = 0, token: str | None = None):
     token = token or secrets.token_urlsafe(16)
+    # Only the UI's own files can be served: the request picks a name from this fixed
+    # map, so no part of the URL ever becomes part of a filesystem path.
+    files = {n: os.path.join(WEB, n) for n in os.listdir(WEB) if os.path.isfile(os.path.join(WEB, n))}
 
     class H(BaseHTTPRequestHandler):
         def log_message(self, *a):
@@ -40,10 +43,11 @@ def make_server(api: Api, port: int = 0, token: str | None = None):
                     return self.send_error(403)
             elif not self._ok_cookie():
                 return self.send_error(403)
-            path = os.path.join(WEB, name)
-            if not os.path.isfile(path):
+            path = files.get(name)
+            if path is None:
                 return self.send_error(404)
-            body = open(path, "rb").read()
+            with open(path, "rb") as f:
+                body = f.read()
             if name == "index.html":
                 body = body.replace(b"<script src=\"app.js\">", b"<script>window.__ARCALUME_TEST_BRIDGE__=1</script><script src=\"app.js\">")
             self.send_response(200)
