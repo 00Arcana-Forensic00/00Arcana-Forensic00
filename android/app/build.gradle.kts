@@ -12,7 +12,8 @@ android {
         applicationId = "com.arcanaforensics.arcalume"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
+        // CI numbers beta builds so each one installs over the last.
+        versionCode = providers.environmentVariable("ARCALUME_VERSION_CODE").orNull?.toInt() ?: 1
         versionName = "0.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -29,6 +30,23 @@ android {
         }
     }
 
+    signingConfigs {
+        // Beta builds only. CI passes a stable keystore so updates install over each other;
+        // without one (a local build) the debug key is used. Store uploads use a separate
+        // upload key that never touches this repository (android/store/SUBMISSION.md).
+        create("beta") {
+            val keystore = providers.environmentVariable("ARCALUME_BETA_KEYSTORE").orNull
+            if (keystore != null) {
+                storeFile = file(keystore)
+                storePassword = providers.environmentVariable("ARCALUME_BETA_PASSWORD").get()
+                keyAlias = "beta"
+                keyPassword = providers.environmentVariable("ARCALUME_BETA_PASSWORD").get()
+            } else {
+                initWith(getByName("debug"))
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -36,6 +54,15 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             // Signing is configured in CI from secrets (see android/store/SUBMISSION.md);
             // unsigned release builds are still produced for inspection.
+        }
+        // A release build (shrunk and optimized, not debuggable) for testers to sideload. Its own
+        // package id and home-screen name let it sit next to the store version.
+        create("beta") {
+            initWith(getByName("release"))
+            applicationIdSuffix = ".beta"
+            versionNameSuffix = "-beta"
+            signingConfig = signingConfigs.getByName("beta")
+            matchingFallbacks += "release"
         }
     }
 

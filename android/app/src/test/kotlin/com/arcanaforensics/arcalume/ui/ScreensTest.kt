@@ -9,8 +9,10 @@ import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.arcanaforensics.arcalume.Brand
 import com.arcanaforensics.arcalume.core.Entitlements
 import com.arcanaforensics.arcalume.core.Finding
 import org.junit.Assert.assertEquals
@@ -96,6 +98,19 @@ class ScreensTest {
         rule.onNodeWithText("Pro, free for 180 more days (until 2027-03-29)").assertExists()
         rule.onNodeWithText("Every new install gets Pro free for 180 days", substring = true).assertExists()
         rule.onNodeWithText("Unlock Pro, US$5.99").assertHasClickAction()
+    }
+
+    @Test fun aboutLinksToThePrivacyPolicyAndTerms() {
+        val opened = mutableListOf<String>()
+        rule.setContent {
+            ArcalumeTheme {
+                PlanScreen(Entitlements.FREE, "US$5.99", sellsInApp = true, acceptsKeys = false,
+                    actions = PlanActions({}, {}, { null }, {}, { opened += it }))
+            }
+        }
+        rule.onNodeWithText("Privacy policy").performScrollTo().performClick()
+        rule.onNodeWithText("Terms of use").performScrollTo().performClick()
+        assertEquals(listOf(Brand.PRIVACY_URL, Brand.TERMS_URL), opened)
     }
 
     @Test fun planAcceptsKeysInTheDirectBuild() {

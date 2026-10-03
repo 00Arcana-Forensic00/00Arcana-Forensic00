@@ -3,6 +3,8 @@ package com.arcanaforensics.arcalume
 object Brand {
     const val NAME = "Arcalume"
     const val SUPPORT_URL = "https://arcana-forensics.com/arcalume/support"
+    const val PRIVACY_URL = "https://arcana-forensics.com/arcalume/privacy"
+    const val TERMS_URL = "https://arcana-forensics.com/arcalume/terms"
 
     /** Google Play one-time product that unlocks Pro (create it in Play Console with this id). */
     const val PRO_PRODUCT_ID = "arcalume_pro"

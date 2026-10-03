@@ -1,4 +1,7 @@
-# Arcalume privacy policy (draft for arcana-forensics.com/arcalume/privacy)
+# Arcalume desktop privacy policy (draft)
+
+The Android app has its own policy, published at arcana-forensics.com/arcalume/privacy from
+`android/store/legal/PRIVACY_POLICY.md`.
 
 _Effective: on first release. Publisher: Arcana-Forensics._
 
@@ -24,7 +27,7 @@ reporting and no advertising, and the app does not connect to the internet.
 Contact: privacy@arcana-forensics.com
 
 ## Store privacy answers
-- **Google Play Data safety:** No data collected, no data shared (details in `android/store/DATA_SAFETY.md`).
+- **Google Play Data safety:** No data collected, no data shared (details in `android/store/PLAY_CONSOLE_ANSWERS.md`; the Android policy itself is `android/store/legal/PRIVACY_POLICY.md`).
 - **Apple App Privacy:** Data Not Collected.
 - **Microsoft Store:** the app does not access, collect or transmit personal information;
   a privacy policy URL is still required, use the page above.

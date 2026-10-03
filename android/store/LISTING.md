@@ -13,45 +13,10 @@ Character limits are Play Console's.
 
 ## Full description (4000)
 
-Arcalume is a forensic document recovery app. Photograph or import a page that glare,
-shadow or bad light has ruined, and Arcalume parses the damage, repairs what the photo still
-holds, and tells you plainly what it could not bring back.
-
-RECOVER, THEN PROVE IT
-• Evens out shadows and uneven light, so faded text that is still in the photo comes back.
-• Restores the ink around glare spots, where text is washed out but not gone.
-• Fills blown-out glare cores smoothly, and marks every filled pixel with a hatched overlay.
-  Those pixels held no data. Arcalume never invents characters and never calls them recovered.
-• Leaves solid black areas alone by default, because they are often redactions.
-• Maps the reading order of multi-column pages, column by column.
-
-EVIDENCE YOU CAN CHECK (PRO)
-• Seals the untouched original, the recovered copy, the filled-pixel map and a full report
-  into one encrypted vault file (Argon2id and AES-256-GCM).
-• Records every sealing in a custody log where each entry is chained to the one before it with
-  SHA-256. Editing, reordering or removing entries breaks the chain, and the app checks it for you.
-• Vaults open in the Arcalume desktop app too, and the desktop reads what the phone writes.
-
-PRIVATE BY DESIGN
-• Arcalume does not request internet access. No account, no ads, no tracking, no cloud.
-• Evidence is excluded from cloud backups. Nothing leaves the phone unless you export it.
-
-BUILT FOR EVERYONE
-• Designed for TalkBack, Switch Access and keyboards, and checked with Google's
-  Accessibility Test Framework. Comparing and zooming work without gestures.
-• Findings are written in plain language and marked with a word and an icon, not colour alone.
-• Text follows your system font size, in light and dark themes.
-
-FREE AND PRO
-Free: recovery, comparison, the filled-pixel map, and opening and checking any vault.
-Pro: clean saved copies, sealing into vaults with a custody log, and sealing a whole session
-at once. Every new install gets Pro free for 180 days. After that, keep it with one payment of
-US$5.99. No subscription, no account, and vaults you sealed can always be opened and checked.
-
-WHAT IT CAN'T DO
-Text inside a blown-out glare spot is gone from that photo; retake it at an angle. The custody
-log proves records were not changed after sealing. It cannot prove what happened to a photo
-before it reached the app, and it is not a certification that evidence is admissible.
+The text Play shows is in `android/fastlane/metadata/android/en-US/` (`title.txt`,
+`short_description.txt`, `full_description.txt`, and `changelogs/<versionCode>.txt`), in the layout
+`fastlane supply` and Play Console's bulk upload use. Edit it there, then check every claim
+against the map below.
 
 ## Claim-to-evidence map
 

@@ -27,6 +27,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.arcanaforensics.arcalume.BuildConfig
+import com.arcanaforensics.arcalume.Brand
 import com.arcanaforensics.arcalume.R
 import com.arcanaforensics.arcalume.core.Entitlements
 
@@ -35,7 +36,8 @@ class PlanActions(
     val restore: () -> Unit,
     val activate: (String) -> String?,
     val removeKey: () -> Unit,
-    val support: () -> Unit,
+    /** Opens a web page (support, privacy policy, terms) in the browser; the app itself stays offline. */
+    val open: (String) -> Unit,
 )
 
 @Composable
@@ -99,7 +101,9 @@ fun PlanScreen(ent: Entitlements, price: String?, sellsInApp: Boolean, acceptsKe
         Section(stringResource(R.string.about_heading)) {
             Text(stringResource(R.string.about_version, BuildConfig.VERSION_NAME))
             Text(stringResource(R.string.about_privacy), style = MaterialTheme.typography.bodyMedium)
-            OutlinedButton(onClick = actions.support, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.support)) }
+            OutlinedButton(onClick = { actions.open(Brand.SUPPORT_URL) }, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.support)) }
+            TextButton(onClick = { actions.open(Brand.PRIVACY_URL) }, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.privacy_policy)) }
+            TextButton(onClick = { actions.open(Brand.TERMS_URL) }, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.terms_of_use)) }
             TextButton(onClick = { showLicenses = !showLicenses }, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.licenses)) }
             if (showLicenses) Text(stringResource(R.string.licenses_body), style = MaterialTheme.typography.bodyMedium)
         }

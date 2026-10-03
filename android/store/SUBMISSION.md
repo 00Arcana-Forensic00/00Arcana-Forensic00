@@ -21,10 +21,22 @@ owner can take, in order.
    `Brand.PRO_PRODUCT_ID`), one-time, priced at **US$5.99** (David's decision, 2026-09-30).
 3. Monetization setup > Licensing: copy the **base64 RSA public key** into
    `Brand.PLAY_LICENSE_KEY` so purchases are signature-checked on the device.
-4. Fill Data safety, content rating, target audience and privacy policy from `DATA_SAFETY.md`,
-   and the listing from `LISTING.md`.
+4. Fill every App content form (privacy policy, ads, app access, content rating, target
+   audience, data safety, advertising ID, financial and health features) from
+   `PLAY_CONSOLE_ANSWERS.md`, the app access instructions from `scripts/REVIEWER_NOTES.md`, and
+   the listing from `../fastlane/metadata/android/en-US/` (claims checked in `LISTING.md`).
+5. Upload the eight screenshots and the feature graphic described in
+   `scripts/SCREENSHOTS_AND_VIDEO.md`.
+6. Declare trader status for the EU (Play Console > Policy > Developer account), with the
+   business address and phone you want shown publicly.
 
-## 3. Signing
+## 3. Legal pages
+
+Fill in the placeholders listed in `legal/README.md`, have the drafts reviewed, run
+`python3 android/store/build_pages.py`, and merge so `arcana-forensics.com/arcalume/privacy`,
+`/terms`, `/refunds`, `/notices` and `/support` are live. Play checks the privacy policy URL.
+
+## 4. Signing
 
 Use **Play App Signing** (Google holds the app signing key). You create an *upload key*:
 
@@ -34,12 +46,21 @@ Keep `arcalume-upload.jks` and its passwords outside the repository (`*.jks` is 
 To have CI sign release bundles, add the keystore (base64) and passwords as repository secrets;
 the release job for that is not written yet, and uploading stays a manual step.
 
-## 4. Build and upload
+## 5. Build and upload
 
     cd android && ./gradlew :app:bundlePlayRelease
 
 Upload `app/build/outputs/bundle/playRelease/app-play-release.aab` to an **internal test**
-track first, then closed testing, then production.
+track first, then closed testing (invite testers with `scripts/TESTERS_AND_SUPPORT.md`), then
+production. Release notes for each version go in
+`../fastlane/metadata/android/en-US/changelogs/<versionCode>.txt`.
+
+## Testing on your own phone before Play
+
+The `beta` build type (`./gradlew :app:assemblePlayBeta`) is the shrunk release build under its
+own package id and home-screen name, **Arcalume Beta**, so it installs next to the store version.
+`android/tools/beta_smoke.sh` installs it on an emulator, walks through recovery, sealing and the
+log check, and saves the store screenshots on the way.
 
 ## Decisions only the owner can make
 

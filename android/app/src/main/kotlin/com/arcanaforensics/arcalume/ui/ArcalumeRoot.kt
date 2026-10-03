@@ -45,7 +45,6 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.arcanaforensics.arcalume.Brand
 import com.arcanaforensics.arcalume.R
 import com.arcanaforensics.arcalume.core.Evidence
 import com.arcanaforensics.arcalume.data.EvidenceRepo
@@ -127,7 +126,7 @@ fun ArcalumeRoot(vm: AppViewModel) {
         restore = vm.pro::restore,
         activate = vm.pro::activateKey,
         removeKey = vm.pro::removeKey,
-        support = { runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(Brand.SUPPORT_URL))) } },
+        open = { url -> runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) } },
     )
 
     Scaffold(
