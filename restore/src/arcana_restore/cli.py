@@ -159,8 +159,6 @@ def main(argv=None) -> int:
     p.set_defaults(fn=lambda a: __import__("arcana_restore.app.main", fromlist=["main"]).main())
 
     p = sub.add_parser("gui", help="open the classic (Tk) window")
-    p.set_defaults(fn=lambda a: __import__("arcana_restore.gui", fromlist=["main"]).main())
-    p = sub.add_parser("gui", help="open the desktop window")
     p.set_defaults(fn=cmd_gui)
 
     args = ap.parse_args(argv)

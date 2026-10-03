@@ -4,7 +4,6 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "arcana-restore"
-version = "0.1.2"
 version = "0.2.0"
 description = "Forensic document restoration: glare/shadow repair, reading-order mapping, passphrase-sealed vaults and a hash-chained custody ledger."
 requires-python = ">=3.10"
