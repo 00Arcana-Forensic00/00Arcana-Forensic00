@@ -39,7 +39,7 @@ def cmd_process(a) -> int:
         return 2
     files = pipeline.collect(a.paths, a.recursive)
     if not files:
-        print("no supported image files found", file=sys.stderr)
+        print("no supported files found (PNG, JPEG, TIFF, BMP, MP4, MOV, AVI, WebM, MKV)", file=sys.stderr)
         return 2
     cfg = RepairConfig(repair=not a.no_repair, flatten=not a.no_flatten, fill_shadow=a.fill_shadow)
     results = pipeline.process_batch(files, a.vault, pw, a.workers, cfg)
@@ -107,7 +107,7 @@ def main(argv=None) -> int:
     ap.add_argument("--version", action="version", version=__version__)
     sub = ap.add_subparsers(dest="cmd", required=True)
 
-    p = sub.add_parser("process", help="repair and seal images (files or directories)")
+    p = sub.add_parser("process", help="repair and seal photos, screenshots or short videos (files or directories)")
     p.add_argument("paths", nargs="+")
     p.add_argument("-o", "--vault", default="./arcana_vault")
     p.add_argument("-r", "--recursive", action="store_true")

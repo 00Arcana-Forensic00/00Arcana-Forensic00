@@ -16,11 +16,11 @@ Status: **self-reviewed, not independently audited.** Do not describe it as audi
 1. **The ledger is tamper-evident, not tamper-proof.** It is unkeyed: anyone who can write the folder can rebuild a fresh, self-consistent chain. Removed *trailing* entries are also invisible. Record the printed head hash somewhere independent (or anchor it with a timestamping service) and verify with `--expect-head`.
 2. **No secure memory handling.** Python cannot reliably wipe passphrases or decrypted data from RAM, and they may reach swap or crash dumps. Use an encrypted disk and a trusted machine.
 3. **Passphrase via `ARCANA_PASSPHRASE`** is visible to other processes of the same user. Prefer the prompt or a locked-down `--passphrase-file`.
-4. **Image decoders parse untrusted files.** OpenCV bundles libpng/libjpeg/libtiff; a memory-safety bug there is out of our control. Keep OpenCV current, process evidence from a low-privilege account, and consider a sandbox for hostile sources.
+4. **Image and video decoders parse untrusted files.** Video support adds FFmpeg (bundled in OpenCV), a much larger parser than the image libraries. A temporary copy of the video (the exact bytes that were hashed) is written to a private temp folder for decoding and deleted immediately after; it is not encrypted while it exists. Limits: 250 MiB, at most 14 frames sampled, 900 frames read. OpenCV bundles libpng/libjpeg/libtiff; a memory-safety bug there is out of our control. Keep OpenCV current, process evidence from a low-privilege account, and consider a sandbox for hostile sources.
 5. **Timestamps come from the local clock** and are not independently attested.
 6. **Symlink/junction check is check-then-open** (Windows has no `O_NOFOLLOW`). A local attacker who can swap files during a run could race it. Use folders only trusted users can write.
 7. **Windows file permissions:** the `0600` mode is a no-op; vaults inherit the folder ACL.
-8. **Repair is interpolation**, not recovery. It is labeled as such and never replaces the original.
+8. **Single-image repair is interpolation**, not recovery. (Video compositing uses real pixels from other frames, but alignment can fail or be subtly wrong; clean reference pixels are never altered and every changed pixel is in the mask.) It is labeled as such and never replaces the original.
 9. **Supply chain:** dependencies are version-ranged, not hash-pinned, and workflow actions are pinned by tag not commit. Pin both before shipping commercial releases.
 10. **Not FIPS-validated;** cryptography comes from the `cryptography` package (OpenSSL).
 11. A vault sealed but whose ledger write then fails is reported as failed although the file exists (rare; disk-full or permission errors).
