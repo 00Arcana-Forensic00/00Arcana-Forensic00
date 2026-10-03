@@ -128,4 +128,32 @@ mod tests {
     fn short_passphrase_rejected() {
         assert!(seal(b"x", "short").is_err());
     }
+
+    fn from_hex(s: &str) -> Vec<u8> {
+        (0..s.len())
+            .step_by(2)
+            .map(|i| u8::from_str_radix(&s[i..i + 2], 16).unwrap())
+            .collect()
+    }
+
+    // Same vectors as recon/tests/test_vault.py, so the Python recon engine and
+    // this crate are checked against each other on every CI run.
+    #[test]
+    fn kdf_matches_python_vector() {
+        let salt: [u8; SALT_LEN] = core::array::from_fn(|i| i as u8);
+        let key = VaultKey::derive("correct horse battery staple extra", &salt).unwrap();
+        assert_eq!(
+            key.bytes.to_vec(),
+            from_hex("af8f2e7bf7f40bde9c81e87d042524a09521cb74dafddad97d5f6e8ba628301b")
+        );
+    }
+
+    #[test]
+    fn unseals_blob_sealed_by_python() {
+        let blob = from_hex(
+            "4152434e01e78798961be15be292a5015c03be1f69ef8f27bb0e8eb1a13b5d6b7c613fbd69c17f0442ba547e8346e23fd099b9fde0aa49cb356bd47d5dca502d72841313a52adf98e8ad51c2",
+        );
+        let plain = unseal(&blob, "correct horse battery staple extra").unwrap();
+        assert_eq!(plain, b"arcana-recon interop vector");
+    }
 }

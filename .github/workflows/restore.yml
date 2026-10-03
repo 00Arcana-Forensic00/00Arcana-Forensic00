@@ -1,0 +1,16 @@
+name: restore
+on:
+  push:
+    paths: ["restore/**", ".github/workflows/restore.yml"]
+  pull_request:
+    paths: ["restore/**"]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: sudo apt-get update && sudo apt-get install -y xvfb
+      - run: pip install -e './restore[test,gui]'
+      - run: xvfb-run -a pytest restore -q
