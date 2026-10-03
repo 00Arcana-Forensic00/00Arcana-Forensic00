@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Arcana Forensics — evidence acquisition without the cloud</title>
-  <meta name="description" content="Air-gapped digital evidence acquisition in Rust. AES-256-GCM sealed vaults, SHA-256 hash-chained custody ledger. MIT-licensed Community edition, source on GitHub.">
+  <meta name="description" content="Air-gapped digital evidence acquisition in Rust, plus document photo/video restoration (Recon, Restore). AES-256-GCM sealed vaults, SHA-256 hash-chained custody ledger. MIT-licensed Community edition, source on GitHub.">
   <style>
     :root {
       --bg: #0b0f14;
@@ -193,6 +193,20 @@
         <p>Every action appended to a local SHA-256 hash chain in SQLite. <code>verify</code> re-hashes and re-checks it end to end.</p>
       </div>
     </div>
+
+    <section class="pricing">
+      <h2>Also from Arcana</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>Arcana Recon</h3>
+          <p>Python CLI. Repairs lighting-damaged document photos (glare/shadow), maps reading order, and seals the result in an ARCN vault the Rust tool can also open. Classical image processing, no ML model. MIT license. <a href="https://github.com/00Arcana-Forensic00/00Arcana-Forensic00/tree/main/recon">Source &amp; docs</a></p>
+        </div>
+        <div class="card">
+          <h3>Arcana Restore</h3>
+          <p>Desktop app + CLI for Windows/macOS/Linux. Repairs glare-damaged document photos and short videos (real pixels from other frames, not AI guessing), seals into a passphrase-encrypted vault (Argon2id + AES-256-GCM). No independent security audit yet; installers just published and largely untested outside Linux. <a href="https://github.com/00Arcana-Forensic00/00Arcana-Forensic00/releases/tag/restore-v0.1.0">Download &amp; verify (SHA256SUMS)</a> · <a href="https://github.com/00Arcana-Forensic00/00Arcana-Forensic00/tree/main/restore">Source &amp; docs</a></p>
+        </div>
+      </div>
+    </section>
 
     <section class="pricing">
       <h2>Licensing</h2>

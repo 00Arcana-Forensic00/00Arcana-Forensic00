@@ -29,7 +29,20 @@ releases: **[arcana-forensics.com/try](https://arcana-forensics.com/try)**
 [`recon/`](recon/README.md) repairs lighting-damaged document photos (shadow
 flattening, glare handling), maps multi-column reading order, and seals the
 result in ARCN v1 vault blobs readable by `arcana-vault`. Its README lists
-what is implemented and what is still aspirational.
+what is implemented and what is still aspirational. MIT license.
+
+## Arcana Restore (desktop app)
+[`restore/`](restore/README.md) is a separate, newer tool: a desktop app and
+CLI (Windows/macOS/Linux installers on the [restore-v0.1.0 release](https://github.com/00Arcana-Forensic00/00Arcana-Forensic00/releases/tag/restore-v0.1.0))
+that repairs glare-damaged document photos and short videos and seals the
+result in its own ARCR-format vault (Argon2id + AES-256-GCM). No independent
+security audit yet; the Windows and macOS builds are freshly published and
+have not had a real-world run outside Linux. **Licensing note:** its
+`pyproject.toml` currently says "Commercial — see LICENSE at repository
+root," but the root `LICENSE` is plain MIT with no commercial carve-out and
+`restore/` has no LICENSE file of its own — this is unresolved and needs a
+decision (either make it MIT like the rest, or add a real commercial LICENSE
+file here) before relying on either description.
 
 ## Trust model
 Community Edition source is MIT (see [LICENSE](LICENSE) and [NOTICE](NOTICE)). See [SECURITY.md](SECURITY.md)
