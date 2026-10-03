@@ -36,3 +36,8 @@ def test_concurrent_appends_stay_chained(tmp_path):
         list(ex.map(lambda i: lg.append("e", {"i": i}), range(40)))
     ok, n, _, _ = lg.verify()
     assert ok and n == 40
+
+
+def test_missing_ledger_does_not_verify(tmp_path):
+    ok, n, _, msg = Ledger(str(tmp_path / "nope.jsonl")).verify()
+    assert not ok and n == 0 and "no ledger file" in msg

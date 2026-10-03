@@ -94,3 +94,37 @@ def test_wrong_passphrase_reported(app, evidence, tmp_path, monkeypatch):
     pump(app)
     assert errs and "Wrong passphrase" in errs[0]
     assert not (tmp_path / "o").exists() or not os.listdir(tmp_path / "o")
+
+
+def test_window_seals_a_video_and_reports_the_repair(app, tmp_path, monkeypatch):
+    from test_video import make_video
+    monkeypatch.setattr(gui.messagebox, "showerror", lambda *a, **k: (_ for _ in ()).throw(AssertionError(a)))
+    vid = str(tmp_path / "clip.avi")
+    make_video(vid, n=10)
+    app._add_paths([vid])
+    app.vault_dir.set(str(tmp_path / "vault"))
+    app.pw1.set(PW); app.pw2.set(PW); app.ack.set(True)
+    app._seal()
+    pump(app, timeout=90)
+    log = app.log.get("1.0", "end")
+    assert "1/1 sealed" in log and "(repaired)" in log
+
+
+def test_window_shows_a_clear_message_for_an_unsupported_file(app, tmp_path, monkeypatch):
+    f = tmp_path / "notes.pdf"; f.write_bytes(b"%PDF-1.7 hello")
+    app._add_paths([str(f)])
+    app.vault_dir.set(str(tmp_path / "vault"))
+    app.pw1.set(PW); app.pw2.set(PW); app.ack.set(True)
+    errors = []
+    monkeypatch.setattr(gui.messagebox, "showerror", lambda t, m: errors.append(m))
+    app._seal()
+    pump(app)
+    log = app.log.get("1.0", "end")
+    assert "Unsupported file type" in log and "0/1 sealed" in log
+
+
+def test_window_verify_flags_a_wrong_folder(app, tmp_path):
+    app.lvault.set(str(tmp_path / "typo"))
+    app._verify()
+    pump(app)
+    assert "FAILED" in app.log.get("1.0", "end")

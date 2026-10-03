@@ -3,7 +3,6 @@ import os
 import subprocess
 import sys
 import cv2
-import numpy as np
 import pytest
 from conftest import FAST_KDF, PW, make_page
 from arcana_restore import pipeline, vault
@@ -150,3 +149,22 @@ def test_extract_writes_nothing_if_any_destination_exists(evidence, tmp_path):
     with pytest.raises(FileExistsError):
         pipeline.extract(r.vault_path, PW, str(out))
     assert sorted(os.listdir(out)) == ["receipt.mask.png"]            # no partial output
+
+
+def test_concurrent_sealing_with_default_kdf_does_not_deadlock(evidence, tmp_path):
+    """Regression: Argon2id (4 lanes) from several threads used to hang forever. Run in a subprocess so a
+    regression fails the test by timeout instead of hanging the suite."""
+    import subprocess, sys, textwrap
+    src = os.path.join(os.path.dirname(__file__), "..", "src")
+    code = textwrap.dedent(f"""
+        import shutil, sys
+        sys.path.insert(0, {src!r})
+        from arcana_restore import pipeline
+        files = []
+        for i in range(6):
+            shutil.copy({str(evidence)!r}, {str(tmp_path)!r} + f"/f{{i}}.png"); files.append({str(tmp_path)!r} + f"/f{{i}}.png")
+        res = pipeline.process_batch(files, {str(tmp_path / 'cv')!r}, "a long passphrase here", workers=4)
+        sys.exit(0 if all(r.ok for r in res) else 1)
+    """)
+    p = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, timeout=120)
+    assert p.returncode == 0, p.stderr

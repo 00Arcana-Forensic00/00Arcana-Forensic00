@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 import pytest
 from conftest import FAST_KDF, PW
-from arcana_restore import pipeline, video, vault, imaging
+from arcana_restore import pipeline, video, imaging
 
 W, H = 960, 700
 

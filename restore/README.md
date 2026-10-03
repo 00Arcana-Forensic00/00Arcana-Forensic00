@@ -41,6 +41,20 @@ Tests cover round trips, tamper/truncation/forged-header rejection, wrong passph
 
 **More:** `docs/SECURITY.md` (threat model, limitations, findings fixed), `docs/AUDIT_SCOPE.md` (brief for an external reviewer), `docs/SIGNING.md` (certificates and secrets).
 
+## Exit codes and troubleshooting
+Exit codes (command line): `0` success; `1` a file failed or an I/O problem (file exists, no space, no permission); `2` usage error, wrong passphrase, or not a valid vault. Errors are always one plain line, never a traceback.
+
+| Symptom | Cause and fix |
+|---|---|
+| "Unsupported file type" | The file is not a supported photo/video. Use PNG, JPEG, TIFF, BMP or MP4/MOV/AVI/WebM/MKV. |
+| "HEIC/AVIF photos are not supported yet" | iPhone photo format. Export or share it as JPEG. |
+| "authentication failed: wrong passphrase or the vault was modified" | Wrong passphrase, or the `.arcr` file was altered or damaged. There is no recovery. |
+| "already exists; nothing was written" | The output folder already has files from this vault. Choose another folder or use `--force`. |
+| `verify-ledger` says "no ledger file found" | Wrong folder: pick the vault folder that holds `ledger.jsonl`. |
+| Window will not start on Linux (`No module named tkinter`) | `sudo apt install python3-tk` when running from source. The packaged app already includes Tk. |
+| Desktop icon will not launch (Linux) | Right-click it and choose "Allow Launching" (the installer tries to do this for you). |
+| Video "frames could not be aligned" | The page needs visible text or texture and the camera must move slowly with the whole page in view. |
+
 ## Desktop app and installers
 Double-click app with a window (Seal evidence / Open vault / Verify ledger), drag-and-drop for images, and an app icon:
 ```bash

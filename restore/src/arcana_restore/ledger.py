@@ -70,7 +70,7 @@ class Ledger:
         """Return (ok, entries, head_hash, message)."""
         prev, n = GENESIS, 0
         if not os.path.exists(self.path):
-            return (expect_head is None, 0, GENESIS, "no ledger" if expect_head is None else "ledger missing")
+            return (False, 0, GENESIS, "no ledger file found here (wrong folder, or nothing has been sealed yet)")
         with open(self.path, "rb") as fh:
             for lineno, raw in enumerate(fh, 1):
                 try:
