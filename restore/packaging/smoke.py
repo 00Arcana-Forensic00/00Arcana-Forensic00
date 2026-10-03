@@ -39,6 +39,27 @@ def main(exe):
             sys.exit("FAIL: extracted original differs from source")
         run(exe, "verify-ledger", "--vault", vault)
         run(exe, "extract", arcr, "-o", os.path.join(t, "o2"), "--passphrase-file", bad, expect=2)
+
+        # Video: the bundled decoder must work inside the packaged app (moving glare across frames).
+        vid = os.path.join(t, "clip.avi")
+        w = cv2.VideoWriter(vid, cv2.VideoWriter_fourcc(*"MJPG"), 10, (400, 300))
+        if w.isOpened():
+            rng = np.random.default_rng(1)
+            page = np.clip(np.full((260, 360, 3), 200) + rng.normal(0, 8, (260, 360, 3)), 0, 255).astype(np.uint8)
+            for row in range(6):
+                cv2.putText(page, f"EVIDENCE LINE {row*7}", (10, 30 + row * 40), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (30, 30, 30), 2)
+            for i in range(10):
+                f = np.full((300, 400, 3), 110, np.uint8)
+                f[20 + i : 280 + i, 20 + i : 380 + i] = page
+                cv2.circle(f, (60 + i * 30, 140), 35, (255, 255, 255), -1)
+                w.write(f)
+            w.release()
+            vault2 = os.path.join(t, "v2")
+            p = run(exe, "process", vid, "-o", vault2, "--passphrase-file", good)
+            if "repaired" not in p.stdout:
+                sys.exit(f"FAIL: video was not repaired in the packaged app\n{p.stdout}\n{p.stderr}")
+        else:
+            print("note: MJPG writer unavailable here, video smoke test skipped")
     print("smoke test passed")
 
 
