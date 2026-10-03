@@ -1,0 +1,41 @@
+# Real terminal output from arcana-acquire 0.1.0 (Community Edition source), synthetic files only.
+# Paths shortened. Built offline from the vendored crates in this repo.
+
+$ arcana-acquire acquire --path src --out case1 --operator analyst01 --case-id CASE-2026-001
+skip: refusing to process special file: symlink skipped: ./src/link.txt
+acquired 5 file(s), skipped 1, ledger events 7, chain_ok=true
+case directory: ./case1
+exit=0
+
+$ arcana-acquire verify --case case1     # clean, with passphrase
+manifest files=5, ledger events=7, chain_ok=true, vault_mismatches=0
+exit=0
+
+$ env -u ARCANA_VAULT_PASSWORD arcana-acquire verify --case case1     # no passphrase: chain only
+note: pass --password or ARCANA_VAULT_PASSWORD to unseal and re-hash vault blobs
+manifest files=5, ledger events=7, chain_ok=true, vault_mismatches=0
+exit=0
+
+$ sqlite3 case2/custody.sqlite "UPDATE custody_events SET path='file9.txt' WHERE id=4"   # edit one line, leave hashes alone
+$ arcana-acquire verify --case case2
+manifest files=5, ledger events=3, chain_ok=false, vault_mismatches=0
+error: verification failed
+exit=1
+
+# now recompute every hash from line 4 down (attacker with write access to the file)
+$ arcana-acquire verify --case case2
+manifest files=5, ledger events=7, chain_ok=true, vault_mismatches=0
+exit=0
+
+# note: ledger row 4 now says file9.txt; manifest.json still lists file4.txt. verify does not compare them.
+
+$ arcana-acquire verify --case case3     # one byte flipped in a sealed vault file
+error: authentication failed (wrong passphrase or corrupted vault)
+exit=1
+
+$ ARCANA_VAULT_PASSWORD=short arcana-acquire acquire --path src --out case4 --operator a
+error: vault format error: passphrase must be at least 12 characters
+exit=1
+
+$ grep -rniE "reqwest|hyper|TcpStream|UdpSocket|std::net|ureq|curl|tokio|socket" crates --include=*.rs --include=*.toml
+exit=1 (1 = no matches)

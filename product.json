@@ -38,7 +38,7 @@
     {
       "id": "prod_professional",
       "name": "Arcana Forensics — Professional",
-      "description": "Commercial forensic acquisition platform for solo practitioners and boutique firms. Professional-grade cryptographic custody with priority support and expert witness documentation. Annual subscription. User attestation of authorized use required. Export control compliance required.",
+      "description": "Commercial forensic acquisition platform for solo practitioners and boutique firms. Professional-grade cryptographic custody with priority support. A license is not an expert opinion or testimony; expert engagements are separate and billed hourly. Annual subscription. User attestation of authorized use required. Export control compliance required.",
       "metadata": {
         "tier": "professional",
         "license_type": "commercial_subscription",

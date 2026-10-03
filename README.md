@@ -37,12 +37,9 @@ CLI (Windows/macOS/Linux installers on the [restore-v0.1.0 release](https://gith
 that repairs glare-damaged document photos and short videos and seals the
 result in its own ARCR-format vault (Argon2id + AES-256-GCM). No independent
 security audit yet; the Windows and macOS builds are freshly published and
-have not had a real-world run outside Linux. **Licensing note:** its
-`pyproject.toml` currently says "Commercial — see LICENSE at repository
-root," but the root `LICENSE` is plain MIT with no commercial carve-out and
-`restore/` has no LICENSE file of its own — this is unresolved and needs a
-decision (either make it MIT like the rest, or add a real commercial LICENSE
-file here) before relying on either description.
+have not had a real-world run outside Linux. **Licensing note:** Arcana Restore is commercially licensed — see
+[`restore/LICENSE`](restore/LICENSE). All other components in this repository
+are MIT (Community Edition).
 
 ## Trust model
 Community Edition source is MIT (see [LICENSE](LICENSE) and [NOTICE](NOTICE)). See [SECURITY.md](SECURITY.md)

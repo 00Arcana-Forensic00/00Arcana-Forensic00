@@ -29,6 +29,13 @@ STRIP_ROWS = 64
 
 VIDEO_EXTS = (".mp4", ".m4v", ".mov", ".avi", ".webm", ".mkv")
 
+# HEIC/AVIF photos (iPhone default) use the same "ftyp" box as MP4/MOV; they are images, not video.
+HEIF_BRANDS = (b"heic", b"heix", b"heim", b"heis", b"hevc", b"hevx", b"mif1", b"msf1", b"avif", b"avis")
+
+
+def is_heif(data: bytes) -> bool:
+    return data[4:8] == b"ftyp" and data[8:12] in HEIF_BRANDS
+
 
 @dataclass(frozen=True)
 class VideoConfig:
@@ -41,7 +48,7 @@ def video_kind(data: bytes) -> str | None:
     """Return a file suffix for a recognised container, else None (magic bytes, not names)."""
     if data[:4] == b"\x1a\x45\xdf\xa3":
         return ".webm"                                   # WebM / Matroska
-    if data[4:8] == b"ftyp":
+    if data[4:8] == b"ftyp" and data[8:12] not in HEIF_BRANDS:
         return ".mp4"                                    # MP4 / MOV / M4V
     if data[:4] == b"RIFF" and data[8:12] == b"AVI ":
         return ".avi"
@@ -155,7 +162,6 @@ def composite(frames: list[np.ndarray], rcfg: RepairConfig, cfg: VideoConfig):
 
     out = np.empty_like(ref)
     replaced = np.zeros((h, w), np.uint8)
-    n = len(warped)
     for y0 in range(0, h, STRIP_ROWS):
         y1 = min(h, y0 + STRIP_ROWS)
         stack = np.stack([wf[y0:y1] for wf in warped]).astype(np.float32)       # n,rows,w,3

@@ -17,6 +17,7 @@ from __future__ import annotations
 import json
 import os
 import struct
+import threading
 import unicodedata
 
 from cryptography.exceptions import InvalidTag
@@ -51,7 +52,18 @@ def _passphrase_bytes(passphrase: str) -> bytes:
     return unicodedata.normalize("NFC", passphrase).encode("utf-8")
 
 
+# Argon2id with several lanes uses its own worker threads inside OpenSSL; concurrent derivations
+# from different Python threads can deadlock there (seen when sealing a folder with the default
+# parameters). One derivation at a time is also easier on memory (64 MiB each).
+_KDF_LOCK = threading.Lock()
+
+
 def _derive(passphrase: str, salt: bytes, kdf: dict) -> bytes:
+    with _KDF_LOCK:
+        return _argon2(passphrase, salt, kdf)
+
+
+def _argon2(passphrase: str, salt: bytes, kdf: dict) -> bytes:
     return Argon2id(
         salt=salt,
         length=32,

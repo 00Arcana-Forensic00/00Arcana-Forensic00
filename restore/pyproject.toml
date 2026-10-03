@@ -7,7 +7,7 @@ name = "arcana-restore"
 version = "0.2.0"
 description = "Forensic document restoration: glare/shadow repair, reading-order mapping, passphrase-sealed vaults and a hash-chained custody ledger."
 requires-python = ">=3.10"
-license = { text = "Commercial - see LICENSE at repository root" }
+license = { file = "LICENSE" }
 dependencies = [
   "numpy>=1.24",
   "opencv-python-headless>=4.8",

@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 import pytest
 from conftest import FAST_KDF, PW
-from arcana_restore import pipeline, video, vault, imaging
+from arcana_restore import pipeline, video, imaging
 
 W, H = 960, 700
 
@@ -149,3 +149,17 @@ def test_webm_and_mp4_containers_decode(tmp_path):
         assert video.video_kind(data) == ext
         frames, _ = video.read_frames(data, video.VideoConfig())
         assert len(frames) >= 6
+
+
+@pytest.mark.parametrize("brand", [b"heic", b"heix", b"mif1", b"avif"])
+def test_iphone_heic_and_avif_are_images_not_video(brand, tmp_path):
+    data = b"\x00\x00\x00\x18ftyp" + brand + b"\x00" * 64
+    assert video.video_kind(data) is None                       # not mistaken for MP4
+    f = tmp_path / "IMG_0001.heic"; f.write_bytes(data)
+    (r,) = pipeline.process_batch([str(f)], str(tmp_path / "v"), PW, 1, kdf=FAST_KDF)
+    assert not r.ok and "HEIC" in r.error and "JPEG" in r.error   # clear next step for the user
+
+
+def test_real_mp4_brands_still_video():
+    for brand in (b"isom", b"mp42", b"avc1", b"qt  ", b"M4V "):
+        assert video.video_kind(b"\x00\x00\x00\x18ftyp" + brand + b"\x00" * 20) == ".mp4"

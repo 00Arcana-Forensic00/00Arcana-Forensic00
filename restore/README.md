@@ -34,7 +34,7 @@ arcana-restore inspect ./vault/….arcr                       # header only, no 
 The passphrase comes from `--passphrase-file`, `ARCANA_PASSPHRASE`, or a hidden prompt. It is never accepted on the command line.
 
 ## Inputs: photos, screenshots and short videos
-PNG, JPEG, TIFF and BMP images, and MP4 / MOV / AVI / WebM / MKV videos (up to 250 MiB). For a **video of a document**, the glare moves as the camera moves, so Arcana Restore picks sharp frames, aligns them to the sharpest one and replaces blown-out pixels with the matching clean pixels from other frames. These are real captured pixels, not guesses; anything still unrecoverable goes through the normal inpainting. Every pixel it changed is marked in the mask; all other pixels are exactly as captured in the reference frame. Needs: a page with some texture or text (so frames can be aligned), glare that moves between frames, and at least 3 alignable frames (otherwise it falls back to the sharpest single frame and says so in the report). The restored image is at most 1920 px on its longest side. Static glare (a light fixed relative to the page) cannot be fixed by moving the camera. The original video is sealed byte-identical.
+PNG, JPEG, TIFF and BMP images (HEIC/AVIF are recognised and rejected with instructions to export as JPEG), and MP4 / MOV / AVI / WebM / MKV videos (up to 250 MiB). For a **video of a document**, the glare moves as the camera moves, so Arcana Restore picks sharp frames, aligns them to the sharpest one and replaces blown-out pixels with the matching clean pixels from other frames. These are real captured pixels, not guesses; anything still unrecoverable goes through the normal inpainting. Every pixel it changed is marked in the mask; all other pixels are exactly as captured in the reference frame. Needs: a page with some texture or text (so frames can be aligned), glare that moves between frames, and at least 3 alignable frames (otherwise it falls back to the sharpest single frame and says so in the report). The restored image is at most 1920 px on its longest side. Static glare (a light fixed relative to the page) cannot be fixed by moving the camera. The original video is sealed byte-identical.
 
 ## What each vault contains
 | entry | meaning |
@@ -72,6 +72,20 @@ pip install -e './restore[test]' && pytest restore
 Tests cover round trips, tamper/truncation/forged-header rejection, wrong passphrase, fresh-process extraction, ledger edits and concurrency, hostile inputs and repair behavior.
 
 **More:** `docs/SECURITY.md` (threat model, limitations, findings fixed), `docs/AUDIT_SCOPE.md` (brief for an external reviewer), `docs/SIGNING.md` (certificates and secrets).
+
+## Exit codes and troubleshooting
+Exit codes (command line): `0` success; `1` a file failed or an I/O problem (file exists, no space, no permission); `2` usage error, wrong passphrase, or not a valid vault. Errors are always one plain line, never a traceback.
+
+| Symptom | Cause and fix |
+|---|---|
+| "Unsupported file type" | The file is not a supported photo/video. Use PNG, JPEG, TIFF, BMP or MP4/MOV/AVI/WebM/MKV. |
+| "HEIC/AVIF photos are not supported yet" | iPhone photo format. Export or share it as JPEG. |
+| "authentication failed: wrong passphrase or the vault was modified" | Wrong passphrase, or the `.arcr` file was altered or damaged. There is no recovery. |
+| "already exists; nothing was written" | The output folder already has files from this vault. Choose another folder or use `--force`. |
+| `verify-ledger` says "no ledger file found" | Wrong folder: pick the vault folder that holds `ledger.jsonl`. |
+| Window will not start on Linux (`No module named tkinter`) | `sudo apt install python3-tk` when running from source. The packaged app already includes Tk. |
+| Desktop icon will not launch (Linux) | Right-click it and choose "Allow Launching" (the installer tries to do this for you). |
+| Video "frames could not be aligned" | The page needs visible text or texture and the camera must move slowly with the whole page in view. |
 
 ## Desktop app and installers
 The installers ship the Arcalume window. The earlier Tk window is still available as `arcana-restore gui`.

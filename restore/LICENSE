@@ -1,0 +1,91 @@
+ARCANA RESTORE — COMMERCIAL LICENSE AGREEMENT
+Version 1.0
+
+Copyright (c) 2026 Arcana-Forensics
+
+This Commercial License Agreement ("Agreement") is between Arcana Forensics
+("Licensor") and the individual or entity purchasing a license ("Licensee")
+for the Arcana Restore software ("Software").
+
+The open-source components of the Arcana Forensics project (including Arcana
+Acquire and Arcana Recon) are licensed separately under the MIT License as
+described in the LICENSE file at the repository root ("Community Edition").
+This Agreement applies ONLY to Arcana Restore. Where Arcana Restore
+incorporates Community Edition components, those components remain under the
+MIT License; this Agreement governs the Restore-specific code, binaries,
+models, and assets.
+
+1. LICENSE GRANT
+
+   Subject to payment of the applicable fees and compliance with this
+   Agreement, Licensor grants Licensee a limited, non-exclusive,
+   non-transferable, non-sublicensable license to install and use the
+   Software as follows:
+
+   a) Professional — $3,500 per seat per year. One "seat" is one named
+      individual user. Each user of the Software requires a seat.
+   b) Enterprise — $35,000 per year. Unlimited seats within Licensee's
+      organization, including subsidiaries under common control.
+   c) Government / Federal — custom pricing starting at $150,000 per year,
+      under a separately executed agreement.
+
+   A Stripe receipt is a seat or organization entitlement under this
+   Agreement. Evaluation: a 30-day evaluation license may be granted in
+   writing, limited to non-production use.
+
+2. RESTRICTIONS
+
+   Licensee shall not: (a) copy, redistribute, resell, or sublicense the
+   Software; (b) reverse engineer, decompile, or disassemble the Software
+   except to the extent such restriction is prohibited by applicable law;
+   (c) remove or alter any proprietary notices; (d) use the Software to
+   provide a competing hosted service without Licensor's written consent;
+   (e) share seats between individuals (Professional tier).
+
+3. OWNERSHIP
+
+   The Software is licensed, not sold. Licensor retains all right, title,
+   and interest in and to the Software, including all intellectual
+   property rights.
+
+4. SUPPORT AND UPDATES
+
+   Active subscriptions include access to generally available updates and
+   commercially reasonable support during the subscription term.
+
+5. FEES AND TERM
+
+   Fees are payable annually in advance and are non-refundable except as
+   required by law. The license term is one (1) year from purchase, renewing
+   automatically for successive one-year terms unless either party gives
+   30 days' written notice of non-renewal. Licensor may change fees for
+   renewal terms with 60 days' notice.
+
+6. TERMINATION
+
+   Either party may terminate for material breach uncured within 30 days'
+   written notice. Upon termination or expiry, Licensee shall cease all use
+   and delete all copies of the Software. Sections 3, 7, and 8 survive.
+
+7. WARRANTY DISCLAIMER
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+   OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. Licensor does not
+   warrant that the Software's output is admissible as evidence or
+   constitutes expert testimony in any proceeding. A license receipt is not
+   a chain-of-custody exhibit and not expert testimony.
+
+8. LIMITATION OF LIABILITY
+
+   TO THE MAXIMUM EXTENT PERMITTED BY LAW, LICENSOR'S TOTAL LIABILITY SHALL
+   NOT EXCEED THE FEES PAID BY LICENSEE IN THE TWELVE (12) MONTHS PRECEDING
+   THE CLAIM. IN NO EVENT SHALL LICENSOR BE LIABLE FOR INDIRECT, INCIDENTAL,
+   SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES.
+
+9. GENERAL
+
+   This Agreement is the entire agreement regarding the Software and
+   supersedes prior discussions. It is governed by the laws of the State of
+   Florida, USA, without regard to conflict-of-law principles. If any
+   provision is unenforceable, the remainder continues in effect.

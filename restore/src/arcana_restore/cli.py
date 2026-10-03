@@ -16,8 +16,12 @@ from .ledger import Ledger
 def _passphrase(args, confirm: bool) -> str:
     """Never from argv (visible in process lists): file, env var, or prompt."""
     if args.passphrase_file:
-        with open(args.passphrase_file, "r", encoding="utf-8") as fh:
-            return fh.read().rstrip("\r\n")
+        try:
+            with open(args.passphrase_file, "r", encoding="utf-8") as fh:
+                return fh.read().rstrip("\r\n")
+        except (OSError, UnicodeDecodeError) as exc:
+            print(f"cannot read the passphrase file: {getattr(exc, 'strerror', None) or exc}", file=sys.stderr)
+            raise SystemExit(2)
     if os.environ.get("ARCANA_PASSPHRASE"):
         return os.environ["ARCANA_PASSPHRASE"]
     if not sys.stdin.isatty():
@@ -62,17 +66,27 @@ def cmd_extract(a) -> int:
         for p in pipeline.extract(a.vault_file, pw, a.out, only, a.force):
             print(f"wrote {p}")
         return 0
-    except vault.AuthError as exc:
+    except vault.VaultError as exc:           # wrong passphrase, not a vault, damaged vault
         print(f"[fail] {exc}", file=sys.stderr)
         return 2
-    except (vault.VaultError, FileExistsError, OSError) as exc:
-        print(f"[fail] {exc}", file=sys.stderr)
+    except (FileExistsError, OSError) as exc:  # output problems: file exists, no space, no permission
+        print(f"[fail] {getattr(exc, 'strerror', None) or exc}" if not isinstance(exc, FileExistsError) else f"[fail] {exc}", file=sys.stderr)
         return 1
+
+
+def cmd_gui(a) -> int:
+    try:
+        from . import gui
+    except ImportError as exc:  # tkinter is a separate package on some Linux distributions
+        print(f"the window needs Tk, which is not installed ({exc}). On Ubuntu/Debian: sudo apt install python3-tk",
+              file=sys.stderr)
+        return 1
+    return gui.main()
 
 
 def cmd_inspect(a) -> int:
     with open(a.vault_file, "rb") as fh:
-        blob = fh.read()
+        blob = fh.read(vault.MAX_HEADER_BYTES + 64)   # the header is all we need; never slurp a huge file
     header, _, _ = vault.parse_header(blob)
     header["kdf"].pop("salt", None)
     print(json.dumps(header, indent=2))
@@ -146,6 +160,8 @@ def main(argv=None) -> int:
 
     p = sub.add_parser("gui", help="open the classic (Tk) window")
     p.set_defaults(fn=lambda a: __import__("arcana_restore.gui", fromlist=["main"]).main())
+    p = sub.add_parser("gui", help="open the desktop window")
+    p.set_defaults(fn=cmd_gui)
 
     args = ap.parse_args(argv)
     try:
@@ -153,3 +169,9 @@ def main(argv=None) -> int:
     except vault.VaultError as exc:
         print(f"[fail] {exc}", file=sys.stderr)
         return 2
+    except OSError as exc:
+        print(f"[fail] {exc.strerror or exc}" + (f": {exc.filename}" if exc.filename else ""), file=sys.stderr)
+        return 1
+    except KeyboardInterrupt:
+        print("cancelled", file=sys.stderr)
+        return 130
