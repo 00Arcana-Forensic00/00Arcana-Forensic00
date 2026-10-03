@@ -43,6 +43,7 @@ Go to the **Verify ledger** tab, choose the vault folder and click **Verify**. P
 
 - **Repair is an estimate.** It makes text easier to see but cannot prove what hidden text said. For anything important, rely on the original and the mask.
 - Damage covering more than 30% of an image is reported and **not** repaired. For video, a changed pixel always comes from another frame of the same video or from the usual estimate, and the mask shows which.
+- **iPhone photos:** the default HEIC format isn't supported yet. In the Photos app choose Share, then save or export as JPEG (or change Settings, Camera, Formats to "Most Compatible").
 - Existing vaults and exported files are never overwritten.
 - A wrong passphrase and a modified file give the same message ("wrong passphrase, or the file was modified").
 

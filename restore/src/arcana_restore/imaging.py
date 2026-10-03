@@ -44,6 +44,8 @@ def decode_image(data: bytes) -> np.ndarray:
     """Validate magic bytes and size, decode to 8-bit BGR. Alpha is discarded."""
     if len(data) > MAX_INPUT_BYTES:
         raise ImageError("input exceeds the 100 MiB limit")
+    if data[4:8] == b"ftyp" and data[8:12] in (b"heic", b"heix", b"heim", b"heis", b"hevc", b"hevx", b"mif1", b"msf1", b"avif", b"avis"):
+        raise ImageError("HEIC/AVIF photos are not supported yet. In your photo app, export or share the photo as JPEG and add that.")
     if not data.startswith(_MAGICS):
         raise ImageError("Unsupported file type. Use a photo or screenshot (PNG, JPEG, TIFF, BMP) or a short video (MP4, MOV, AVI, WebM, MKV).")
     img = cv2.imdecode(np.frombuffer(data, dtype=np.uint8), cv2.IMREAD_UNCHANGED)
