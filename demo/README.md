@@ -3,10 +3,10 @@
 | Pack | Path | Commercial map |
 |---|---|---|
 | Community / open source | `demo/opensource/` | Free MIT Community Edition |
-| Professional trial (14-day) | `demo/trial/` | Overlay on Professional $3,500/seat/year |
+| Professional trial (14-day) | `demo/trial/` | Overlay on Professional $995/seat/year |
 
 Neither pack includes live customer data. All files are synthetic.
-Paid Enterprise ($35,000/year) and Government (from $150,000/year) do not ship extra evidence files in this tree.
+Paid Enterprise ($9,950/year) and Government (from $150,000/year) do not ship extra evidence files in this tree.
 
 ## Trial rules (content policy, not DRM)
 

@@ -17,8 +17,8 @@ Cancel: https://arcana-forensics.com/site/checkout-cancel.html
 | Stripe product | List price | Who | Packet |
 |---|---|---|---|
 | Community Edition | $0 | researchers, OSS | `demo/opensource/` MIT |
-| Professional License | **$3,500 / year / seat** | boutique labs, solo examiners | trial pack overlay + paid seat |
-| Enterprise License | **$35,000 / year** | law firms, corporate security | unlimited seats in one org |
+| Professional License | **$995 / year / seat** | boutique labs, solo examiners | trial pack overlay + paid seat |
+| Enterprise License | **$9,950 / year** | law firms, corporate security | unlimited seats in one org |
 | Government / Federal | custom, **from $150,000 / year** | agencies | quote only; FedRAMP / CJIS / ITAR as required |
 | Professional services | **$250–$500 / hour** | deployment, training, optional expert-witness *engagement* | billed as Stripe invoice or time entry |
 
@@ -37,7 +37,7 @@ Paste only `https://buy.stripe.com/...` Payment Links into `site/stripe.config.j
 ## Trial overlay
 
 Community remains free. Professional may use a Stripe **14-day subscription trial**
-that matches packet AF-FT-2026-0921, then $3,500/year per seat.
+that matches packet AF-FT-2026-0921, then $995/year per seat.
 Enterprise and Government are not self-serve trials.
 
 ## Air-gap contract
