@@ -68,6 +68,6 @@ Installers come from the `restore-release` workflow (manual run, or push a `rest
 |---|---|---|
 | Windows | `ArcanaRestore-Setup-X.exe` | double-click; Start menu entry and optional desktop shortcut; per-user, no admin prompt |
 | macOS | `ArcanaRestore-X-macos.dmg` | drag "Arcana Restore" to Applications |
-| Linux | `ArcanaRestore-X-linux.tar.gz` | extract, run `./install.sh --desktop` |
+| Linux | `ArcanaRestore-X-linux.tar.gz` | extract, run `./install.sh` |
 
 **Status:** Linux is built and tested here (CLI smoke test, installer script, window launch, automated widget tests under Xvfb). The Windows installer, macOS dmg, and the signing/notarization steps are written but have not been run: run the workflow once before shipping. Builds are unsigned unless these repository secrets exist: `WIN_CERT_PFX_BASE64`, `WIN_CERT_PASSWORD` (Windows) and `APPLE_CERT_P12_BASE64`, `APPLE_CERT_PASSWORD`, `APPLE_SIGN_IDENTITY`, `APPLE_ID`, `APPLE_TEAM_ID`, `APPLE_APP_PASSWORD` (macOS). Unsigned installers trigger SmartScreen/Gatekeeper warnings. The app icon is a placeholder (`packaging/icons/icon.png`): replace it and run `python packaging/make_icons.py --from-png`. The ledger file lock is POSIX-only (Windows serializes threads, not separate processes).

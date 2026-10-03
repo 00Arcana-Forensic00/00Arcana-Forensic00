@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Per-user install of Arcana Restore: no root needed.
-#   ./install.sh            install + app-menu entry
-#   ./install.sh --desktop  also put a shortcut on the Desktop
+#   ./install.sh             install + app-menu entry + Desktop icon
+#   ./install.sh --no-desktop  skip the Desktop icon
 #   ./install.sh --uninstall
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
@@ -35,7 +35,7 @@ Categories=Utility;Security;
 DESK
 chmod 0644 "$DESKTOP_FILE"
 
-if [[ "${1:-}" == "--desktop" ]]; then
+if [[ "${1:-}" != "--no-desktop" ]]; then
   D="$(xdg-user-dir DESKTOP 2>/dev/null || echo "$HOME/Desktop")"
   mkdir -p "$D"; cp "$DESKTOP_FILE" "$D/arcana-restore.desktop"; chmod +x "$D/arcana-restore.desktop"
   # GNOME shows desktop launchers as "untrusted" until allowed; mark ours trusted so one click works.
@@ -43,4 +43,4 @@ if [[ "${1:-}" == "--desktop" ]]; then
 fi
 if command -v update-desktop-database >/dev/null; then update-desktop-database "$APPS" 2>/dev/null || true; fi
 case ":$PATH:" in *":$BIN:"*) ;; *) echo "Note: $BIN is not on your PATH, so the 'arcana-restore' command will not be found until you add it." ;; esac
-echo "Installed. Find 'Arcana Restore' in your applications menu (or on the Desktop if you used --desktop)."
+echo "Installed. Find 'Arcana Restore' in your applications menu and on your Desktop (if the icon asks, right-click it and choose Allow Launching)."
