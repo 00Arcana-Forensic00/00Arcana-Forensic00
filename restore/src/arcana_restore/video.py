@@ -162,7 +162,6 @@ def composite(frames: list[np.ndarray], rcfg: RepairConfig, cfg: VideoConfig):
 
     out = np.empty_like(ref)
     replaced = np.zeros((h, w), np.uint8)
-    n = len(warped)
     for y0 in range(0, h, STRIP_ROWS):
         y1 = min(h, y0 + STRIP_ROWS)
         stack = np.stack([wf[y0:y1] for wf in warped]).astype(np.float32)       # n,rows,w,3
