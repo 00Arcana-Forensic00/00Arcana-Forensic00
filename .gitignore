@@ -28,3 +28,6 @@ __pycache__/
 
 # Local archives
 *.zip
+
+# Offline dependency cache (regenerate with `make`); the build uses vendor/
+offline_cache/cargo_vendor/
