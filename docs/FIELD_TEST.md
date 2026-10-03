@@ -2,7 +2,7 @@
 
 **Packet ID:** AF-FT-2026-0921  
 **Issued:** 21 September 2026  
-**Repository:** https://github.com/mitchell5584dm-tech/00Arcana-Forensic00  
+**Repository:** https://github.com/00Arcana-Forensic00/00Arcana-Forensic00  
 **Domain:** https://arcana-forensics.com
 
 ## License that travels with the code
