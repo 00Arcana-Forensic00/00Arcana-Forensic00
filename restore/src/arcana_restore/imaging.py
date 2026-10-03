@@ -45,7 +45,7 @@ def decode_image(data: bytes) -> np.ndarray:
     if len(data) > MAX_INPUT_BYTES:
         raise ImageError("input exceeds the 100 MiB limit")
     if not data.startswith(_MAGICS):
-        raise ImageError("unsupported format (expected PNG, JPEG, TIFF or BMP)")
+        raise ImageError("Unsupported file type. Use a photo or screenshot (PNG, JPEG, TIFF, BMP) or a short video (MP4, MOV, AVI, WebM, MKV).")
     img = cv2.imdecode(np.frombuffer(data, dtype=np.uint8), cv2.IMREAD_UNCHANGED)
     if img is None:
         raise ImageError("image could not be decoded (corrupt or truncated)")

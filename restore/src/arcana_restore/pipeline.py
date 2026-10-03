@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import hashlib
+
+import cv2
 import json
 import os
 import re
@@ -12,7 +14,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
-from . import __version__, imaging, vault
+from . import __version__, imaging, vault, video
 from .ledger import Ledger
 
 LEDGER_NAME = "ledger.jsonl"
@@ -62,9 +64,9 @@ def read_regular_file(path: str) -> bytes:
     with os.fdopen(fd, "rb") as fh:
         if not stat.S_ISREG(os.fstat(fh.fileno()).st_mode):
             raise imaging.ImageError("not a regular file")
-        data = fh.read(imaging.MAX_INPUT_BYTES + 1)
-    if len(data) > imaging.MAX_INPUT_BYTES:
-        raise imaging.ImageError("input exceeds the 100 MiB limit")
+        data = fh.read(video.MAX_VIDEO_BYTES + 1)
+    if len(data) > video.MAX_VIDEO_BYTES:
+        raise imaging.ImageError("input exceeds the size limit (images 100 MiB, videos 250 MiB)")
     return data
 
 
@@ -96,6 +98,25 @@ def _write_new(path: str, data: bytes) -> None:
             pass
 
 
+def _restore_video(original: bytes, cfg: imaging.RepairConfig):
+    """Combine aligned frames to remove glare, then run the normal repair on what is left."""
+    vcfg = video.VideoConfig()
+    frames, _ = video.read_frames(original, vcfg)
+    if not cfg.repair:  # triage-and-seal only: keep the sharpest frame untouched
+        best = max(frames, key=video._sharpness)
+        mask, report = imaging.triage(best, cfg)
+        report.update({"source_kind": "video", "frames_sampled": len(frames), "frames_used": 1})
+        report["status"] = "detected_not_repaired" if mask.any() else "stable"
+        return best, mask, report
+    comp, vmask, vreport = video.composite(frames, cfg, vcfg)
+    mask2, report = imaging.triage(comp, cfg)
+    restored = imaging.repair(comp, mask2, cfg, report)       # inpaint only what frames could not fix
+    report.update(vreport)
+    if vreport.get("composite_replaced_fraction", 0) > 0 and report["status"] == "stable":
+        report["status"] = "repaired"
+    return restored, cv2.bitwise_or(vmask, mask2), report
+
+
 def process_file(path: str, vault_dir: str, passphrase: str, ledger: Ledger,
                  cfg: imaging.RepairConfig | None = None, kdf: dict | None = None) -> Result:
     cfg = cfg or imaging.RepairConfig()
@@ -105,9 +126,12 @@ def process_file(path: str, vault_dir: str, passphrase: str, ledger: Ledger,
     try:
         original = read_regular_file(path)
         src_hash = sha256(original)
-        img = imaging.decode_image(original)
-        mask, report = imaging.triage(img, cfg)
-        restored = imaging.repair(img, mask, cfg, report)
+        if video.video_kind(original):
+            restored, mask, report = _restore_video(original, cfg)
+        else:
+            img = imaging.decode_image(original)
+            mask, report = imaging.triage(img, cfg)
+            restored = imaging.repair(img, mask, cfg, report)
         nodes = imaging.reading_order(restored)
         report["reading_order_nodes"] = len(nodes)
 
@@ -156,7 +180,7 @@ def process_file(path: str, vault_dir: str, passphrase: str, ledger: Ledger,
     return Result(path, False, None, err, {}, (time.perf_counter() - t0) * 1000)
 
 
-SUPPORTED = (".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp")
+SUPPORTED = (".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp") + video.VIDEO_EXTS
 
 
 def collect(paths: list[str], recursive: bool = False) -> list[str]:
