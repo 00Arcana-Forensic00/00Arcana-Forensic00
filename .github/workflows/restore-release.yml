@@ -38,11 +38,19 @@ jobs:
           sudo apt-get install -y python3-tk xvfb libgirepository1.0-dev libcairo2-dev pkg-config gir1.2-webkit2-4.1
           # PyGObject 3.52+ needs girepository-2.0 (not in ubuntu-latest); 3.50 builds against 1.0.
           pip install 'PyGObject<3.51' 'pywebview[gtk]'
-      - name: Test
+      - name: Install package
+        timeout-minutes: 15
+        run: pip install --progress-bar off -e './restore[test,gui,app]' pytest-timeout
+      - name: Collect tests
+        timeout-minutes: 5
         run: |
-          pip install -e './restore[test,gui,app]' pytest-timeout
-          # --timeout makes a hanging test fail with a stack dump instead of stalling the job.
-          if [ "$RUNNER_OS" = Linux ]; then xvfb-run -a pytest restore -q --timeout=180; else pytest restore -q --timeout=180; fi
+          if [ "$RUNNER_OS" = Linux ]; then xvfb-run -a pytest restore --collect-only -q; else pytest restore --collect-only -q; fi
+      - name: Test
+        timeout-minutes: 15
+        run: |
+          # -v names every test as it starts; --timeout fails a hung test; faulthandler_timeout dumps all
+          # thread stacks if something stalls outside a test (e.g. a native GUI call).
+          if [ "$RUNNER_OS" = Linux ]; then xvfb-run -a pytest restore -v --timeout=180 -o faulthandler_timeout=90; else pytest restore -v --timeout=180 -o faulthandler_timeout=90; fi
       - name: Build executables (direct edition)
         run: python restore/packaging/build.py
       - name: Smoke test command-line executable
