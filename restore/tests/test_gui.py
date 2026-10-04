@@ -107,7 +107,22 @@ def test_window_seals_a_video_and_reports_the_repair(app, tmp_path, monkeypatch)
     app._seal()
     pump(app, timeout=90)
     log = app.log.get("1.0", "end")
-    assert "1/1 sealed" in log and "(repaired)" in log
+    assert "1/1 sealed" in log and "(repaired)" in log, log
+
+
+def test_a_failing_error_dialog_does_not_leave_the_window_busy(app, tmp_path, monkeypatch):
+    """If the error dialog itself raises (or a platform dialog misbehaves) the window must still recover."""
+    def boom(*a, **k):
+        raise RuntimeError("dialog failed")
+    monkeypatch.setattr(gui.messagebox, "showerror", boom)
+    f = tmp_path / "notes.pdf"; f.write_bytes(b"%PDF-1.7 hello")
+    app._add_paths([str(f)])
+    app.vault_dir.set(str(tmp_path / "vault"))
+    app.pw1.set(PW); app.pw2.set(PW); app.ack.set(True)
+    app._run(lambda: (_ for _ in ()).throw(ValueError("worker failed")))
+    pump(app, timeout=10)
+    assert not app.busy
+    assert "ERROR: worker failed" in app.log.get("1.0", "end")
 
 
 def test_window_shows_a_clear_message_for_an_unsupported_file(app, tmp_path, monkeypatch):

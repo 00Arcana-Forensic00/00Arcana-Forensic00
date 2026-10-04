@@ -50,7 +50,7 @@ jobs:
         run: |
           # -v names every test as it starts; --timeout fails a hung test; faulthandler_timeout dumps all
           # thread stacks if something stalls outside a test (e.g. a native GUI call).
-          if [ "$RUNNER_OS" = Linux ]; then xvfb-run -a pytest restore -v --timeout=180 -o faulthandler_timeout=90; else pytest restore -v --timeout=180 -o faulthandler_timeout=90; fi
+          if [ "$RUNNER_OS" = Linux ]; then xvfb-run -a pytest restore -v --timeout=180 --timeout-method=thread -o faulthandler_timeout=90; else pytest restore -v --timeout=180 --timeout-method=thread -o faulthandler_timeout=90; fi
       - name: Build executables (direct edition)
         run: python restore/packaging/build.py
       - name: Smoke test command-line executable
