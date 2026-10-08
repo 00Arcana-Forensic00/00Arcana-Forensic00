@@ -1,0 +1,15 @@
+name: macos-diag
+on:
+  push:
+    branches: ["claude/macos-diag-*"]
+jobs:
+  diag:
+    runs-on: macos-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: pip install --progress-bar off -e './restore[test,gui,app]' pytest-timeout
+      - name: Diagnose
+        run: pytest restore/tests/test_gui.py -v --timeout=150 --timeout-method=thread -p no:cacheprovider
