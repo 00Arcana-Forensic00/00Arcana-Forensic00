@@ -31,16 +31,30 @@ def test_no_images_is_a_clear_error(tmp_path):
         gui.seal_files([str(tmp_path)], str(tmp_path / "v"), PW)
 
 
-@pytest.fixture
-def app():
+@pytest.fixture(scope="module")
+def tk_root():
+    """One Tk window for the whole module.
+
+    Creating and destroying a fresh tk.Tk() per test leaves the macOS Tk event loop in a state where
+    update() eventually stops returning (seen on the macOS release runner). The shipped app has a single
+    window for its whole life, so share one here and give each test a fresh App on it.
+    """
     try:
         root = tk.Tk()
     except tk.TclError:
         pytest.skip("no display available (run under xvfb-run)")
     root.withdraw()
-    a = gui.App(root)
-    yield a
+    yield root
     root.destroy()
+
+
+@pytest.fixture
+def app(tk_root):
+    a = gui.App(tk_root)
+    yield a
+    a.close()
+    for w in tk_root.winfo_children():
+        w.destroy()
 
 
 def pump(app, timeout=30):
