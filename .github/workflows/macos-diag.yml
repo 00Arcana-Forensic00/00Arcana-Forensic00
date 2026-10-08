@@ -12,4 +12,4 @@ jobs:
         with: { python-version: "3.11" }
       - run: pip install --progress-bar off -e './restore[test,gui,app]' pytest-timeout
       - name: Diagnose
-        run: pytest restore/tests/test_zz_macos_diag.py -s -v --timeout=150 --timeout-method=thread -p no:cacheprovider
+        run: pytest restore/tests/test_gui.py -s -v --timeout=150 --timeout-method=thread -p no:cacheprovider

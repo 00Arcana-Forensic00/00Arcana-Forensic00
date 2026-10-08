@@ -43,12 +43,49 @@ def app():
     root.destroy()
 
 
+def _diag_log(msg):
+    import sys
+    print(f"[diag {time.strftime('%H:%M:%S')}] {msg}", file=sys.__stderr__, flush=True)
+
+
+_STATE = {"in_update": False, "t_enter": 0.0, "where": ""}
+
+
+def _start_watchdog_once():
+    import faulthandler, os, subprocess, sys, threading
+    if _STATE.get("started"):
+        return
+    _STATE["started"] = True
+
+    def watchdog():
+        while True:
+            time.sleep(1)
+            if _STATE["in_update"] and time.time() - _STATE["t_enter"] > 25:
+                _diag_log(f"WATCHDOG: update() blocked >25 s in {_STATE['where']}; threads={[t.name for t in threading.enumerate()]}")
+                faulthandler.dump_traceback(file=sys.__stderr__, all_threads=True)
+                try:
+                    out = subprocess.run(["sample", str(os.getpid()), "3"], capture_output=True, text=True, timeout=90).stdout
+                    _diag_log("SAMPLE:\n" + "\n".join(out.splitlines()[:300]))
+                except Exception as exc:  # noqa: BLE001
+                    _diag_log(f"sample failed: {exc!r}")
+                os._exit(3)
+    threading.Thread(target=watchdog, daemon=True).start()
+
+
 def pump(app, timeout=30):
+    import os
+    _start_watchdog_once()
+    where = os.environ.get("PYTEST_CURRENT_TEST", "?")
     end = time.time() + timeout
     time.sleep(0.05)
+    n = 0
     while time.time() < end:
+        n += 1
+        _STATE.update(in_update=True, t_enter=time.time(), where=where)
         app.root.update()
+        _STATE["in_update"] = False
         if not app.busy:
+            _diag_log(f"pump done after {n} updates in {where}")
             return
         time.sleep(0.02)
     raise AssertionError("operation did not finish")
