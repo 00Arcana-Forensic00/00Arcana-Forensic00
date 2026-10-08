@@ -69,6 +69,7 @@ jobs:
       - name: Linux package
         if: runner.os == 'Linux'
         run: |
+          bash -n restore/packaging/linux/install.sh
           d="restore/dist/Arcalume-${VERSION}-linux"
           mkdir -p "$d"
           cp restore/dist/Arcalume restore/dist/arcana-restore restore/packaging/icons/icon.png restore/packaging/linux/install.sh "$d/"
