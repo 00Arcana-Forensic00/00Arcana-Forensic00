@@ -99,6 +99,9 @@ def test_wrong_passphrase_reported(app, evidence, tmp_path, monkeypatch):
 def test_window_seals_a_video_and_reports_the_repair(app, tmp_path, monkeypatch):
     from test_video import make_video
     monkeypatch.setattr(gui.messagebox, "showerror", lambda *a, **k: (_ for _ in ()).throw(AssertionError(a)))
+    # Use FAST_KDF so the heavy Argon2id derivation doesn't cause a timeout on CI
+    _orig_seal = gui.seal_files
+    monkeypatch.setattr(gui, "seal_files", lambda *a, **k: _orig_seal(*a, **{**k, "kdf": FAST_KDF}))
     vid = str(tmp_path / "clip.avi")
     make_video(vid, n=10)
     app._add_paths([vid])
