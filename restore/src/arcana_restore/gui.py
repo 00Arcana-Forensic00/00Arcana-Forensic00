@@ -12,6 +12,7 @@ import queue
 import subprocess
 import sys
 import threading
+import traceback
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
@@ -167,24 +168,31 @@ class App:
         try:
             while True:
                 kind, payload = self.events.get_nowait()
-                if kind == "log":
-                    self.say(payload)
-                elif kind == "error":
-                    self.say(f"ERROR: {payload}")
-                    messagebox.showerror("Arcana Restore", payload)
-                elif kind == "progress":
-                    self.progress.stop()
-                    self.progress.configure(mode="determinate", maximum=payload[1], value=payload[0])
-                elif kind == "reveal":
-                    self.reveal_path = payload
-                    self.reveal_btn.configure(state="normal")
-                elif kind == "done":
-                    self.progress.stop()
-                    self.progress.configure(mode="determinate")
-                    self._set_busy(False)
+                try:
+                    self._handle_event(kind, payload)
+                except Exception:  # a failing dialog must never strand the window in "busy"
+                    traceback.print_exc()
         except queue.Empty:
             pass
-        self.root.after(100, self._drain)
+        finally:
+            self.root.after(100, self._drain)
+
+    def _handle_event(self, kind, payload):
+        if kind == "log":
+            self.say(payload)
+        elif kind == "error":
+            self.say(f"ERROR: {payload}")
+            messagebox.showerror("Arcana Restore", payload)
+        elif kind == "progress":
+            self.progress.stop()
+            self.progress.configure(mode="determinate", maximum=payload[1], value=payload[0])
+        elif kind == "reveal":
+            self.reveal_path = payload
+            self.reveal_btn.configure(state="normal")
+        elif kind == "done":
+            self.progress.stop()
+            self.progress.configure(mode="determinate")
+            self._set_busy(False)
 
     # -- Seal tab
     def _build_seal(self):
