@@ -101,7 +101,16 @@ class App:
         self.log.pack(fill="x", padx=20, pady=(0, 6))
         self.progress = ttk.Progressbar(root, mode="determinate")
         self.progress.pack(fill="x", padx=20, pady=(0, 14))
-        self.root.after(100, self._drain)
+        self._after_id = self.root.after(100, self._drain)
+
+    def close(self):
+        """Stop the event pump. The window owner destroys the widgets."""
+        if getattr(self, "_after_id", None):
+            try:
+                self.root.after_cancel(self._after_id)
+            except tk.TclError:
+                pass
+            self._after_id = None
 
     # -- styling / helpers
     def _style(self):
@@ -175,7 +184,7 @@ class App:
         except queue.Empty:
             pass
         finally:
-            self.root.after(100, self._drain)
+            self._after_id = self.root.after(100, self._drain)
 
     def _handle_event(self, kind, payload):
         if kind == "log":
