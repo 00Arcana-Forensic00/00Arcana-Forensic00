@@ -23,6 +23,11 @@ def page_html() -> str:
     html = read("index.html")
     html = html.replace('<link rel="stylesheet" href="app.css">', f"<style>\n{read('app.css')}\n</style>")
     html = html.replace('<script src="app.js"></script>', f"<script>\n{read('app.js')}\n</script>")
+    if sys.platform == "darwin":
+        # macOS's WKWebView applies the page policy to pywebview's own page-to-Python bridge, which uses
+        # eval; without this the page never gets its bridge ("did not become ready" in the CI smoke test).
+        # Every other restriction stays: no network, no forms, no external sources, nothing outside the page.
+        html = html.replace("script-src 'self' 'unsafe-inline';", "script-src 'self' 'unsafe-inline' 'unsafe-eval';", 1)
     return html
 
 
@@ -76,8 +81,24 @@ def _smoke(webview, window) -> int:
 
     outcome = {"code": 1}
 
+    def probe() -> str:
+        """What the page looks like right now (shown when the check fails, so CI says why)."""
+        bits = []
+        for label, js in (("readyState", "document.readyState"),
+                          ("bridge", "typeof window.pywebview"),
+                          ("ready", "document.body && document.body.dataset.ready"),
+                          ("href", "location.href.slice(0, 60)")):
+            try:
+                bits.append(f"{label}={window.evaluate_js(js)!r}")
+            except Exception as exc:  # noqa: BLE001
+                bits.append(f"{label}!{type(exc).__name__}: {str(exc)[:80]}")
+        return ", ".join(bits)
+
     def check():
-        deadline = time.time() + 60
+        start = time.time()
+        deadline = start + 60
+        last_exc = None
+        next_report = start + 10
         while time.time() < deadline:
             try:
                 if window.evaluate_js("document.body.dataset.ready") == "1":
@@ -85,11 +106,17 @@ def _smoke(webview, window) -> int:
                     print(f"smoke: window ready, app name {name!r}")
                     outcome["code"] = 0 if name == brand.APP_NAME else 1
                     break
-            except Exception:
-                pass
+            except Exception as exc:  # noqa: BLE001
+                last_exc = exc
+            if time.time() >= next_report:
+                print(f"smoke: waiting ({int(time.time() - start)} s): {probe()}", file=sys.stderr, flush=True)
+                next_report += 10
             time.sleep(0.5)
         else:
             print("smoke: page did not become ready", file=sys.stderr)
+            print(f"smoke: last state: {probe()}", file=sys.stderr)
+            if last_exc is not None:
+                print(f"smoke: last error: {type(last_exc).__name__}: {last_exc}", file=sys.stderr)
         window.destroy()
 
     webview.start(check)

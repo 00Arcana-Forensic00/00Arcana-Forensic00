@@ -121,3 +121,15 @@ def test_inlined_page_has_no_external_references():
     assert "Content-Security-Policy" in html and "connect-src 'self'" in html
     for scheme in ("http://", "https://"):
         assert scheme not in html.replace("http-equiv", "")
+
+
+def test_unsafe_eval_is_allowed_only_on_macos(monkeypatch):
+    """pywebview's bridge needs eval under WKWebView; every other platform keeps the stricter policy,
+    and macOS keeps every other restriction."""
+    import sys
+    for platform, allowed in (("linux", False), ("win32", False), ("darwin", True)):
+        monkeypatch.setattr(sys, "platform", platform)
+        html = page_html()
+        assert ("'unsafe-eval'" in html) is allowed, platform
+        for kept in ("default-src 'none'", "connect-src 'self'", "form-action 'none'", "base-uri 'none'"):
+            assert kept in html, (platform, kept)
