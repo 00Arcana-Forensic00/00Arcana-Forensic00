@@ -1,0 +1,19 @@
+# Arcana Forensics MCP Server — Cloudflare Worker
+# Exposes forensics operations, CI/build controls, and repo management as MCP tools.
+#
+# Deploy:  npx wrangler deploy   (from this folder)
+# Secrets: npx wrangler secret put GITHUB_TOKEN       (personal access token with repo scope)
+#          npx wrangler secret put MCP_SHARED_SECRET   (shared secret for authenticating MCP clients)
+
+name = "arcana-forensics-mcp"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+GITHUB_OWNER = "00Arcana-Forensic00"
+GITHUB_REPO = "00Arcana-Forensic00"
+
+[[kv_namespaces]]
+binding = "MCP_STATE"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
