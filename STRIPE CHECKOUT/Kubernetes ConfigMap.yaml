@@ -42,7 +42,7 @@ data:
         authorization_attestation_required: true
         prices:
           - id: price_prof_annual
-            amount: 350000
+            amount: 49000
             currency: usd
             type: recurring
             interval: year
@@ -71,7 +71,7 @@ data:
         sso_enabled: true
         prices:
           - id: price_ent_annual
-            amount: 3500000
+            amount: 490000
             currency: usd
             type: recurring
             interval: year

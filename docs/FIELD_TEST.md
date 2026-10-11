@@ -14,9 +14,9 @@ Paid overlay (does not replace MIT on the public tree):
 | Tier | Price |
 |---|---|
 | Community Edition | Free |
-| Professional License | $3,500 / year / seat |
-| Enterprise License | $35,000 / year (unlimited seats, one org) |
-| Government / Federal | custom from $150,000 / year |
+| Professional License | $490 / year / seat |
+| Enterprise License | $4,900 / year (unlimited seats, one org) |
+| Government / Federal | custom from $25,000 / year |
 | Professional services | $250–$500 / hour |
 
 Checkout: https://arcana-forensics.com/site/pricing.html  

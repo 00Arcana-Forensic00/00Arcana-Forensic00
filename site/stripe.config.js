@@ -1,9 +1,9 @@
 window.ARCANA_STRIPE = {
   communityInventoryUrl: "https://buy.stripe.com/dRm8wO0vIesA0Yg1Jn5sA0j",
 
-  professionalUrl: "https://buy.stripe.com/7sY9AS2DQbgo6iAds55sA0i",
+  professionalUrl: "" /* old $3,500 link was deactivated; paste the new $490 Payment Link here */,
 
-  enterpriseUrl: "https://buy.stripe.com/4gMdR8a6i4S0cGY5ZD5sA0h",
+  enterpriseUrl: "" /* old $35,000 link was deactivated; paste the new $4,900 Payment Link here */,
 
   servicesUrl: "mailto:sales@arcana-forensics.com",
 
@@ -12,9 +12,9 @@ window.ARCANA_STRIPE = {
 
   packetId: "AF-FT-2026-0921",
 
-  professionalUsd: 3500,
-  enterpriseUsd: 35000,
-  governmentFromUsd: 150000,
+  professionalUsd: 490,
+  enterpriseUsd: 4900,
+  governmentFromUsd: 25000,
   servicesMinUsd: 250,
   servicesMaxUsd: 500
 };
