@@ -48,8 +48,8 @@
   </style>
   <script type="application/ld+json">
   {"@context":"https://schema.org","@graph":[
-    {"@type":"Product","@id":"https://arcana-forensics.com/site/pricing.html#professional","name":"Arcana Forensics Professional License (1 seat, annual)","brand":{"@type":"Brand","name":"Arcana Forensics"},"description":"Air-gapped digital evidence acquisition software with AES-256-GCM vault sealing and a SHA-256 hash-chained custody ledger. One seat, annual license, priority email support.","url":"https://arcana-forensics.com/site/pricing.html#professional","offers":{"@type":"Offer","price":"3500.00","priceCurrency":"USD","availability":"https://schema.org/InStock","url":"https://arcana-forensics.com/site/pricing.html#professional"}},
-    {"@type":"Product","@id":"https://arcana-forensics.com/site/pricing.html#enterprise","name":"Arcana Forensics Enterprise License (organization, annual)","brand":{"@type":"Brand","name":"Arcana Forensics"},"description":"Organization-wide license for law firms and corporate security teams: unlimited seats inside one organization, onboarding assistance and priority support.","url":"https://arcana-forensics.com/site/pricing.html#enterprise","offers":{"@type":"Offer","price":"35000.00","priceCurrency":"USD","availability":"https://schema.org/InStock","url":"https://arcana-forensics.com/site/pricing.html#enterprise"}}
+    {"@type":"Product","@id":"https://arcana-forensics.com/site/pricing.html#professional","name":"Arcana Forensics Professional License (1 seat, annual)","brand":{"@type":"Brand","name":"Arcana Forensics"},"description":"Air-gapped digital evidence acquisition software with AES-256-GCM vault sealing and a SHA-256 hash-chained custody ledger. One seat, annual license, priority email support.","url":"https://arcana-forensics.com/site/pricing.html#professional","offers":{"@type":"Offer","price":"490.00","priceCurrency":"USD","availability":"https://schema.org/InStock","url":"https://arcana-forensics.com/site/pricing.html#professional"}},
+    {"@type":"Product","@id":"https://arcana-forensics.com/site/pricing.html#enterprise","name":"Arcana Forensics Enterprise License (organization, annual)","brand":{"@type":"Brand","name":"Arcana Forensics"},"description":"Organization-wide license for law firms and corporate security teams: unlimited seats inside one organization, onboarding assistance and priority support.","url":"https://arcana-forensics.com/site/pricing.html#enterprise","offers":{"@type":"Offer","price":"4900.00","priceCurrency":"USD","availability":"https://schema.org/InStock","url":"https://arcana-forensics.com/site/pricing.html#enterprise"}}
   ]}
   </script>
 </head>
@@ -69,20 +69,21 @@
 
     <article id="professional">
       <h2>Professional License</h2>
-      <p class="price">$995/seat/year</p>
+      <p class="price">$490/seat/year</p>
       <p class="desc">Single seat. Priority support.</p>
-      <a class="btn" id="pro-link" href="mailto:sales@arcana-forensics.com?subject=Arcana%20Professional">Checkout Professional on Stripe</a>
+      <a class="btn" id="pro-link" href="mailto:sales@arcana-forensics.com?subject=Arcana%20Professional">Buy Professional</a>
     </article>
 
     <article id="enterprise">
       <h2>Enterprise License</h2>
+      <p class="price">$4,900/year</p>
       <p class="desc">Law firms and corporate security. Unlimited seats inside one organization. Includes onboarding assistance and priority support.</p>
-      <a class="btn" id="ent-link" href="mailto:sales@arcana-forensics.com?subject=Arcana%20Enterprise">Checkout Enterprise on Stripe</a>
+      <a class="btn" id="ent-link" href="mailto:sales@arcana-forensics.com?subject=Arcana%20Enterprise">Buy Enterprise</a>
     </article>
 
     <article>
       <h2>Government / Federal</h2>
-      <p class="price">Contact sales</p>
+      <p class="price">From $25,000/year</p>
       <p class="desc">Requires the compliance set the agency names (e.g. FedRAMP, CJIS, ITAR) when those regimes apply. Not a self-serve Payment Link.</p>
       <a class="btn" href="mailto:sales@arcana-forensics.com?subject=Arcana%20Federal%20quote">Request a federal quote</a>
     </article>
@@ -108,7 +109,7 @@
       if (c.professionalUrl) { pro.href = c.professionalUrl; wired = true; }
       if (c.enterpriseUrl) { ent.href = c.enterpriseUrl; wired = true; }
       if (c.servicesUrl) { svc.href = c.servicesUrl; }
-      if (wired) { note.hidden = true; }
+      if (wired && note) { note.hidden = true; }
     })();
   </script>
 </body>

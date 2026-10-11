@@ -61,7 +61,7 @@ resource "stripe_product" "professional" {
 
 resource "stripe_price" "professional_annual" {
   product     = stripe_product.professional.id
-  unit_amount = 350000
+  unit_amount = 49000
   currency    = "usd"
   type        = "recurring"
   
@@ -94,7 +94,7 @@ resource "stripe_product" "enterprise" {
 
 resource "stripe_price" "enterprise_annual" {
   product     = stripe_product.enterprise.id
-  unit_amount = 3500000
+  unit_amount = 490000
   currency    = "usd"
   type        = "recurring"
   

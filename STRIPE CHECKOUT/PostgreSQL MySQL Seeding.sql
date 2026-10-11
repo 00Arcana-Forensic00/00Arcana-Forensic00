@@ -43,8 +43,8 @@ INSERT INTO products (id, name, description, tier, license_type, support_level, 
 -- Insert Prices
 INSERT INTO prices (id, product_id, amount, currency, type, interval_period, trial_days) VALUES
 ('price_community_free', 'prod_community', 0, 'usd', 'one_time', NULL, NULL),
-('price_prof_annual', 'prod_professional', 350000, 'usd', 'recurring', 'year', 14),
-('price_ent_annual', 'prod_enterprise', 3500000, 'usd', 'recurring', 'year', NULL),
+('price_prof_annual', 'prod_professional', 49000, 'usd', 'recurring', 'year', 14),
+('price_ent_annual', 'prod_enterprise', 490000, 'usd', 'recurring', 'year', NULL),
 ('price_gov_custom', 'prod_government', 0, 'usd', 'quote_only', NULL, NULL);
 
 -- Insert Features (Community)

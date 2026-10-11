@@ -17,16 +17,16 @@ Cancel: https://arcana-forensics.com/site/checkout-cancel.html
 | Stripe product | List price | Who | Packet |
 |---|---|---|---|
 | Community Edition | $0 | researchers, OSS | `demo/opensource/` MIT |
-| Professional License | **$3,500 / year / seat** | boutique labs, solo examiners | trial pack overlay + paid seat |
-| Enterprise License | **$35,000 / year** | law firms, corporate security | unlimited seats in one org |
-| Government / Federal | custom, **from $150,000 / year** | agencies | quote only; FedRAMP / CJIS / ITAR as required |
+| Professional License | **$490 / year / seat** | boutique labs, solo examiners | trial pack overlay + paid seat |
+| Enterprise License | **$4,900 / year** | law firms, corporate security | unlimited seats in one org |
+| Government / Federal | custom, **from $25,000 / year** | agencies | quote only; FedRAMP / CJIS / ITAR as required |
 | Professional services | **$250–$500 / hour** | deployment, training, optional expert-witness *engagement* | billed as Stripe invoice or time entry |
 
 ## Dashboard products to create
 
-1. **Arcana Professional** — recurring yearly, unit amount `350000` cents USD, quantity = seats.
+1. **Arcana Professional** — recurring yearly, unit amount `49000` cents USD, quantity = seats.
    After-completion URL: `/site/checkout-success.html?sku=pro`.
-2. **Arcana Enterprise** — recurring yearly, unit amount `3500000` cents USD, quantity 1 (org).
+2. **Arcana Enterprise** — recurring yearly, unit amount `490000` cents USD, quantity 1 (org).
    Success URL: `/site/checkout-success.html?sku=ent`.
 3. **Arcana Services retainer** (optional) — invoice or Payment Link; do not auto-charge hourly from the static site.
 4. Government stays **Sales-led**. No public Payment Link. Button goes to `mailto:sales@arcana-forensics.com?subject=Arcana%20Federal%20Quote`.
@@ -37,7 +37,7 @@ Paste only `https://buy.stripe.com/...` Payment Links into `site/stripe.config.j
 ## Trial overlay
 
 Community remains free. Professional may use a Stripe **14-day subscription trial**
-that matches packet AF-FT-2026-0921, then $3,500/year per seat.
+that matches packet AF-FT-2026-0921, then $490/year per seat.
 Enterprise and Government are not self-serve trials.
 
 ## Air-gap contract
